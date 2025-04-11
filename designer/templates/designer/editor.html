@@ -1,0 +1,224 @@
+{% extends 'designer/base.html' %}
+{% load static %}
+
+{% block title %}Light Plot Editor{% endblock %}
+
+{% block extra_css %}
+<style>
+    #editor-container {
+        width: 100%;
+        height: 85vh;
+        position: relative;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        overflow: hidden;
+    }
+    
+    #toolbar {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 100;
+        background-color: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    #sidebar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 250px;
+        height: 100%;
+        background-color: white;
+        border-left: 1px solid #ccc;
+        padding: 15px;
+        overflow-y: auto;
+    }
+    
+    #canvas {
+        width: calc(100% - 250px);
+        height: 100%;
+    }
+    
+    .fixture-item {
+        padding: 5px;
+        margin-bottom: 5px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+    }
+    
+    .ai-prompt {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 260px;
+        z-index: 100;
+    }
+    
+    .template-item {
+        margin-bottom: 10px;
+        padding: 5px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>{% if plot %}Edit Plot: {{ plot.title }}{% else %}New Lighting Plot{% endif %}</h1>
+    <div>
+        <button id="save-button" class="btn btn-primary">Save Plot</button>
+        <a href="{% url 'designer:my_plots' %}" class="btn btn-outline-secondary ms-2">Back to My Plots</a>
+    </div>
+</div>
+
+<div id="editor-container">
+    <div id="toolbar">
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-dark" id="select-tool">
+                <i class="bi bi-cursor"></i> Select
+            </button>
+            <button class="btn btn-sm btn-outline-dark" id="add-fixture-tool">
+                <i class="bi bi-plus-circle"></i> Add Fixture
+            </button>
+            <button class="btn btn-sm btn-outline-dark" id="pan-tool">
+                <i class="bi bi-arrows-move"></i> Pan
+            </button>
+            <button class="btn btn-sm btn-outline-dark" id="zoom-in">
+                <i class="bi bi-zoom-in"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-dark" id="zoom-out">
+                <i class="bi bi-zoom-out"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="canvas"></div>
+    
+    <div id="sidebar">
+        <ul class="nav nav-tabs" id="sidebar-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="fixtures-tab" data-bs-toggle="tab" data-bs-target="#fixtures" type="button" role="tab">Fixtures</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">Templates</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab">Properties</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content mt-3">
+            <div class="tab-pane fade show active" id="fixtures" role="tabpanel">
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-sm" placeholder="Search fixtures...">
+                </div>
+                <div id="fixtures-list">
+                    {% for fixture in fixtures %}
+                    <div class="fixture-item" data-fixture-id="{{ fixture.id }}">
+                        {{ fixture.name }} ({{ fixture.fixture_type }})
+                    </div>
+                    {% empty %}
+                    <p>No fixtures available yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="templates" role="tabpanel">
+                {% for template in templates %}
+                <div class="template-item" data-template-id="{{ template.id }}">
+                    <strong>{{ template.name }}</strong>
+                    <p>{{ template.description|truncatechars:50 }}</p>
+                </div>
+                {% empty %}
+                <p>No templates available yet.</p>
+                {% endfor %}
+            </div>
+            
+            <div class="tab-pane fade" id="properties" role="tabpanel">
+                <div id="fixture-properties" style="display: none;">
+                    <h6>Fixture Properties</h6>
+                    <form id="fixture-properties-form">
+                        <div class="mb-2">
+                            <label class="form-label">Channel</label>
+                            <input type="number" class="form-control form-control-sm" id="channel">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Dimmer</label>
+                            <input type="number" class="form-control form-control-sm" id="dimmer">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Color</label>
+                            <input type="text" class="form-control form-control-sm" id="color">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Purpose</label>
+                            <input type="text" class="form-control form-control-sm" id="purpose">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control form-control-sm" id="notes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div id="stage-properties">
+                    <h6>Stage Properties</h6>
+                    <form id="stage-properties-form">
+                        <div class="mb-2">
+                            <label class="form-label">Stage</label>
+                            <select class="form-select form-select-sm" id="stage-select">
+                                {% for stage in stages %}
+                                <option value="{{ stage.id }}">{{ stage.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Grid Size</label>
+                            <input type="number" class="form-control form-control-sm" id="grid-size" value="1">
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show-grid">
+                                <label class="form-check-label">Show Grid</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ai-prompt">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Ask the AI assistant..." id="ai-input">
+            <button class="btn btn-outline-secondary" type="button" id="ai-submit">
+                <i class="bi bi-send"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initial placeholder for SVG.js code 
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the drawing canvas
+        const draw = SVG().addTo('#canvas').size('100%', '100%');
+        
+        // Create a group for the stage
+        const stage = draw.group().id('stage');
+        
+        // Draw a default stage
+        stage.rect(800, 600).fill('#f9f9f9').stroke('#000');
+        
+        // Placeholder for fixture, template, and tool functionality
+        // Will be implemented in future phases
+        
+        console.log('Light Plot Editor initialized');
+    });
+</script>
+{% endblock %}

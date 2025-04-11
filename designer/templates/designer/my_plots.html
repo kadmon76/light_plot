@@ -1,0 +1,75 @@
+{% extends 'designer/base.html' %}
+
+{% block title %}My Light Plots{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Light Plots</h1>
+    <a href="{% url 'designer:new_plot' %}" class="btn btn-primary">Create New Plot</a>
+</div>
+
+{% if plots %}
+    <div class="row">
+        {% for plot in plots %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ plot.title }}</h5>
+                        <p class="card-text text-muted">Last updated: {{ plot.updated_at|date:"M d, Y" }}</p>
+                        <p class="card-text">{{ plot.description|truncatechars:100 }}</p>
+                        
+                        {% if plot.show_name or plot.venue %}
+                            <div class="mt-2">
+                                {% if plot.show_name %}<p class="mb-1"><small>Show: {{ plot.show_name }}</small></p>{% endif %}
+                                {% if plot.venue %}<p class="mb-1"><small>Venue: {{ plot.venue }}</small></p>{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{% url 'designer:edit_plot' plot.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger ms-2" 
+                                onclick="confirmDelete('{{ plot.id }}', '{{ plot.title }}')">Delete</button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        <p>You haven't created any light plots yet.</p>
+        <p>Click the "Create New Plot" button to get started.</p>
+    </div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete "<span id="plot-title"></span>"?
+                This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirm-delete-btn" class="btn btn-danger">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmDelete(plotId, plotTitle) {
+        document.getElementById('plot-title').textContent = plotTitle;
+        document.getElementById('confirm-delete-btn').href = '/delete-plot/' + plotId + '/';
+        
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

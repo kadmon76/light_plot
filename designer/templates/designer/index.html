@@ -1,0 +1,51 @@
+{% extends 'designer/base.html' %}
+
+{% block title %}Light Plot Designer - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto text-center">
+        <h1 class="display-4 mb-4">Theatrical Lighting Plot Designer</h1>
+        <p class="lead">
+            A specialized 2D vector graphic design tool for theatrical lighting designers.
+            Create simple light plots for theatre shows with an intuitive interface.
+        </p>
+        
+        <div class="mt-5">
+            {% if user.is_authenticated %}
+                <a href="{% url 'designer:new_plot' %}" class="btn btn-primary btn-lg">Create New Plot</a>
+                <a href="{% url 'designer:my_plots' %}" class="btn btn-outline-secondary btn-lg ms-2">View My Plots</a>
+            {% else %}
+                <a href="{% url 'admin:login' %}" class="btn btn-primary btn-lg">Login to Get Started</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Simple Interface</h5>
+                <p class="card-text">Focused specifically on theatrical lighting design with an intuitive, lean interface.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Standard Fixtures</h5>
+                <p class="card-text">Library of common theatrical lighting instruments and positioning templates.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">2D Visualization</h5>
+                <p class="card-text">Visual design of stage and lighting positions with vector graphics.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

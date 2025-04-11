@@ -1,0 +1,47 @@
+/* Base styles for the light plot designer app */
+
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Editor specific styles */
+.svg-container {
+    border: 1px solid #dee2e6;
+    background-color: white;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.fixture-item:hover, .template-item:hover {
+    background-color: #f8f9fa;
+}
+
+.fixture-selected {
+    background-color: #e9ecef;
+    border-color: #007bff !important;
+}
+
+/* Custom toolbar button styles */
+.tool-active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Properties panel styling */
+.property-group {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.property-group:last-child {
+    border-bottom: none;
+}
+
+/* AI prompt area styling */
+.ai-response {
+    background-color: #f0f7ff;
+    border-left: 4px solid #007bff;
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+}
