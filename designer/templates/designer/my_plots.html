@@ -66,7 +66,7 @@
 <script>
     function confirmDelete(plotId, plotTitle) {
         document.getElementById('plot-title').textContent = plotTitle;
-        document.getElementById('confirm-delete-btn').href = '/delete-plot/' + plotId + '/';
+        document.getElementById('confirm-delete-btn').href = '{% url "designer:delete_plot" 123 %}'.replace('123', plotId);
         
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
         deleteModal.show();

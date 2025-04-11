@@ -68,7 +68,16 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>{% if plot %}Edit Plot: {{ plot.title }}{% else %}New Lighting Plot{% endif %}</h1>
+    <div class="d-flex align-items-center">
+        <h1 class="me-3">{% if plot %}Edit Plot{% else %}New Lighting Plot{% endif %}</h1>
+        <div class="input-group" style="width: 300px;">
+            <span class="input-group-text">Title</span>
+            <input type="text" class="form-control" name="plot_title" value="{% if plot %}{{ plot.title }}{% else %}Untitled Plot{% endif %}">
+        </div>
+        {% if plot %}
+        <input type="hidden" name="plot_id" value="{{ plot.id }}">
+        {% endif %}
+    </div>
     <div>
         <button id="save-button" class="btn btn-primary">Save Plot</button>
         <a href="{% url 'designer:my_plots' %}" class="btn btn-outline-secondary ms-2">Back to My Plots</a>
@@ -203,22 +212,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"></script>
 <script>
-    // Initial placeholder for SVG.js code 
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the drawing canvas
-        const draw = SVG().addTo('#canvas').size('100%', '100%');
-        
-        // Create a group for the stage
-        const stage = draw.group().id('stage');
-        
-        // Draw a default stage
-        stage.rect(800, 600).fill('#f9f9f9').stroke('#000');
-        
-        // Placeholder for fixture, template, and tool functionality
-        // Will be implemented in future phases
-        
-        console.log('Light Plot Editor initialized');
-    });
+    // Make sure SVG.js is properly loaded
+    if (typeof SVG !== 'function') {
+        console.error('SVG.js library not loaded! Loading it now...');
+        document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"><\/script>');
+        document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"><\/script>');
+    }
 </script>
+<script src="{% static 'designer/js/editor.js' %}"></script>
 {% endblock %}
