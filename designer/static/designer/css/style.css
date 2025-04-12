@@ -88,6 +88,83 @@ body {
     border-color: #ced4da;
 }
 
+/* Pipes and Trusses */
+.pipe-item {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    cursor: move;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.pipe-item:hover {
+    background-color: #f8f9fa;
+    border-color: #ced4da;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.pipe-item:active {
+    background-color: #f0f0f0;
+    transform: translateY(1px);
+}
+
+.pipe-item .pipe-preview {
+    width: 60px;
+    height: 12px;
+    background-color: #666;
+    border-radius: 2px;
+    margin-right: 8px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.pipe-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.pipe-actions button {
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.pipe-actions button:hover {
+    transform: scale(1.05);
+}
+
+/* Pipe dragging visual feedback */
+.pipe-item.dragging {
+    opacity: 0.7;
+    border-style: dashed;
+}
+
+/* Pipe on canvas */
+.pipe-element {
+    cursor: move;
+    transition: filter 0.2s ease;
+}
+
+.pipe-element:hover {
+    filter: brightness(1.05);
+}
+
+.pipe-element.selected {
+    outline: 2px dashed #ff3300;
+    box-shadow: 0 0 8px rgba(255, 51, 0, 0.3);
+}
+
+/* Drag animations */
+.pipe-element.dragging {
+    opacity: 0.8;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
 /* Canvas */
 #canvas {
     background-color: #f0f0f0;

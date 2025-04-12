@@ -113,6 +113,9 @@
                 <button class="nav-link active" id="fixtures-tab" data-bs-toggle="tab" data-bs-target="#fixtures" type="button" role="tab">Fixtures</button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pipes-tab" data-bs-toggle="tab" data-bs-target="#pipes" type="button" role="tab">Pipes/Trusses</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">Templates</button>
             </li>
             <li class="nav-item" role="presentation">
@@ -133,6 +136,48 @@
                     {% empty %}
                     <p>No fixtures available yet.</p>
                     {% endfor %}
+                </div>
+            </div>
+            
+            <div class="tab-pane fade" id="pipes" role="tabpanel">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">Add Pipe/Truss</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="pipe-form">
+                            <div class="mb-2">
+                                <label class="form-label">Name</label>
+                                <input type="text" class="form-control form-control-sm" id="pipe-name" placeholder="e.g., FOH Pipe 1">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Type</label>
+                                <select class="form-select form-select-sm" id="pipe-type">
+                                    <option value="pipe">Pipe</option>
+                                    <option value="truss">Truss</option>
+                                    <option value="bar">Lighting Bar</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Length (meters)</label>
+                                <input type="number" class="form-control form-control-sm" id="pipe-length" value="10">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Color</label>
+                                <select class="form-select form-select-sm" id="pipe-color">
+                                    <option value="#666666">Silver</option>
+                                    <option value="#333333">Dark Gray</option>
+                                    <option value="#000000">Black</option>
+                                </select>
+                            </div>
+                            <button type="button" id="add-pipe-btn" class="btn btn-sm btn-primary">Add to Plot</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <h6>Your Pipes/Trusses</h6>
+                <div id="pipes-list" class="mt-2">
+                    <p class="text-muted small">No pipes or trusses added yet. Use the form above to add one.</p>
                 </div>
             </div>
             
@@ -221,5 +266,5 @@
         document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"><\/script>');
     }
 </script>
-<script src="{% static 'designer/js/editor.js' %}"></script>
+<script src="{% static 'designer/js/editor.js' %}" type="module"></script>
 {% endblock %}
