@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Import modules
-    import('./modules/core.js')
+    import('./core.js')
         .then(core => {
             // Initialize the editor
             try {
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Set up save button
                 const saveButton = document.getElementById('save-button');
                 if (saveButton) {
-                    import('./modules/io.js').then(io => {
+                    import('./io.js').then(io => {
                         saveButton.addEventListener('click', io.savePlot);
                         
                         // Check if we're editing an existing plot

@@ -16,7 +16,8 @@ class PlotController(BaseController):
     def __init__(self):
         """Initialize the plot controller"""
         super().__init__()
-    
+        self.model = LightingPlot
+        
     def get_plots_for_user(self, user):
         """
         Retrieve all lighting plots for a specific user.

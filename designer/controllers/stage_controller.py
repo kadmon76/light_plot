@@ -13,6 +13,7 @@ class StageController(BaseController):
     def __init__(self):
         """Initialize the stage controller"""
         super().__init__()
+        self.model = Stage
     
     def get_all_stages(self):
         """

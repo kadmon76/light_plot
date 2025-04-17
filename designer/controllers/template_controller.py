@@ -13,7 +13,8 @@ class TemplateController(BaseController):
     def __init__(self):
         """Initialize the template controller"""
         super().__init__()
-    
+        self.model = StageTemplate 
+        
     def get_all_templates(self):
         """
         Get all stage templates.
