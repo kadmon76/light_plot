@@ -1,8 +1,12 @@
 # designer/controllers/plot_controller.py
+import json
+import logging
+from django.core.cache import cache
+from django.contrib.auth.models import User
 from .base_controller import BaseController
 from ..models import LightingPlot, PlotFixture, Stage, LightFixture
-from django.contrib.auth.models import User
-import json
+
+logger = logging.getLogger(__name__)
 
 class PlotController(BaseController):
     """
@@ -13,10 +17,14 @@ class PlotController(BaseController):
     managing the fixtures within plots.
     """
     
-    def __init__(self):
-        """Initialize the plot controller"""
-        super().__init__()
-        self.model = LightingPlot
+    def __init__(self, cache_timeout=300):  # Cache plots for 5 minutes by default
+        """
+        Initialize the plot controller
+        
+        Args:
+            cache_timeout (int): Cache timeout in seconds
+        """
+        super().__init__(LightingPlot, cache_timeout)
         
     def get_plots_for_user(self, user):
         """
@@ -30,22 +38,43 @@ class PlotController(BaseController):
         """
         return LightingPlot.objects.filter(user=user)
     
-    def get_plot_by_id(self, plot_id, user=None):
+    def get_plot_by_id(self, plot_id, user=None, use_cache=True):
         """
         Retrieve a specific lighting plot by ID.
         
         Args:
             plot_id (int): ID of the plot to retrieve.
             user (User, optional): If provided, ensure the plot belongs to this user.
+            use_cache (bool): Whether to use cache (default: True)
             
         Returns:
             LightingPlot: The requested plot or None if not found.
         """
+        if not user:
+            # Use base controller method if no user is provided
+            return self.get_by_id(plot_id, use_cache)
+            
         try:
-            if user:
-                return LightingPlot.objects.get(id=plot_id, user=user)
-            return LightingPlot.objects.get(id=plot_id)
+            # Try to get from cache first
+            if use_cache:
+                cache_key = f"plot_id_{plot_id}_user_{user.id}"
+                cached_plot = cache.get(cache_key)
+                if cached_plot:
+                    return cached_plot
+                    
+            # Get from database if not in cache
+            plot = LightingPlot.objects.get(id=plot_id, user=user)
+            
+            # Set in cache
+            if use_cache:
+                cache_key = f"plot_id_{plot_id}_user_{user.id}"
+                cache.set(cache_key, plot, self.cache_timeout)
+                
+            return plot
         except LightingPlot.DoesNotExist:
+            return None
+        except Exception as e:
+            logger.error(f"Error retrieving plot with ID {plot_id} for user {user}: {e}")
             return None
     
     def create_or_update_plot(self, plot_data, user):
@@ -97,6 +126,13 @@ class PlotController(BaseController):
             plot.plot_data = plot_data['plot_data']
             
         plot.save()
+        
+        # Clear cache for this plot and user
+        if user:
+            cache_key = f"plot_id_{plot.id}_user_{user.id}"
+            cache.delete(cache_key)
+            # Also clear user plots cache
+            cache.delete(f"user_plots_{user.id}")
         
         # Handle fixtures if provided
         if 'fixtures' in plot_data and plot_data['fixtures']:
@@ -153,12 +189,28 @@ class PlotController(BaseController):
         Returns:
             bool: True if successful, False otherwise.
         """
-        plot = self.get_plot_by_id(plot_id, user)
+        plot = self.get_plot_by_id(plot_id, user, use_cache=False)
         if not plot:
             return False
             
-        plot.delete()
-        return True
+        try:
+            # Delete the plot
+            plot.delete()
+            
+            # Clear cache
+            cache_key_plot = f"plot_id_{plot_id}_user_{user.id}"
+            cache_key_plots = f"user_plots_{user.id}"
+            cache.delete(cache_key_plot)
+            cache.delete(cache_key_plots)
+            
+            # Also clear any editor context cache
+            cache.delete(f"editor_context_user_{user.id}_plot_{plot_id}")
+            cache.delete(f"plot_data_{plot_id}_user_{user.id}")
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error deleting plot with ID {plot_id}: {e}")
+            return False
     
     def get_plot_with_fixtures(self, plot_id, user):
         """
@@ -171,37 +223,47 @@ class PlotController(BaseController):
         Returns:
             dict: Dictionary with plot and fixtures data or None if plot not found
         """
-        plot = self.get_plot_by_id(plot_id, user)
-        if not plot:
-            return None
+        try:
+            plot = self.get_plot_by_id(plot_id, user)
+            if not plot:
+                return None
+                
+            fixtures = plot.fixtures.all()
             
-        fixtures = plot.fixtures.all()
+            fixtures_data = []
+            for fixture in fixtures:
+                try:
+                    fixtures_data.append({
+                        'id': fixture.id,
+                        'fixture_id': fixture.fixture_type.id,
+                        'x': fixture.x_position,
+                        'y': fixture.y_position,
+                        'rotation': fixture.rotation,
+                        'channel': fixture.channel,
+                        'dimmer': fixture.dimmer,
+                        'color': fixture.color,
+                        'purpose': fixture.purpose,
+                        'notes': fixture.notes
+                    })
+                except Exception as fixture_error:
+                    logger.error(f"Error processing fixture {fixture.id}: {fixture_error}")
+                    # Continue with next fixture
         
-        fixtures_data = []
-        for fixture in fixtures:
-            fixtures_data.append({
-                'id': fixture.id,
-                'fixture_id': fixture.fixture_type.id,
-                'x': fixture.x_position,
-                'y': fixture.y_position,
-                'rotation': fixture.rotation,
-                'channel': fixture.channel,
-                'dimmer': fixture.dimmer,
-                'color': fixture.color,
-                'purpose': fixture.purpose,
-                'notes': fixture.notes
-            })
-    
-        return {
-            'plot': {
-                'id': plot.id,
-                'title': plot.title,
-                'stage_id': plot.stage.id,
-                'show_name': plot.show_name,
-                'venue': plot.venue,
-                'designer': plot.designer,
-                'date': plot.date.isoformat() if plot.date else None,
-                'plot_data': plot.plot_data
-            },
-            'fixtures': fixtures_data
-        }
+            result = {
+                'plot': {
+                    'id': plot.id,
+                    'title': plot.title,
+                    'stage_id': plot.stage.id,
+                    'show_name': plot.show_name,
+                    'venue': plot.venue,
+                    'designer': plot.designer,
+                    'date': plot.date.isoformat() if plot.date else None,
+                    'plot_data': plot.plot_data
+                },
+                'fixtures': fixtures_data
+            }
+            
+            return result
+        except Exception as e:
+            logger.error(f"Error retrieving plot data for plot {plot_id}: {e}")
+            return None

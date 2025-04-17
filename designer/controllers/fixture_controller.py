@@ -1,6 +1,9 @@
 # designer/controllers/fixture_controller.py
+import logging
 from .base_controller import BaseController
 from ..models import LightFixture
+
+logger = logging.getLogger(__name__)
 
 class FixtureController(BaseController):
     """
@@ -10,10 +13,14 @@ class FixtureController(BaseController):
     retrieving fixtures, creating new fixtures, and updating existing ones.
     """
     
-    def __init__(self):
-        """Initialize the fixture controller"""
-        super().__init__()
-        self.model = LightFixture
+    def __init__(self, cache_timeout=3600):  # Cache fixtures for 1 hour by default
+        """
+        Initialize the fixture controller
+        
+        Args:
+            cache_timeout (int): Cache timeout in seconds
+        """
+        super().__init__(LightFixture, cache_timeout)
     
     def get_all_fixtures(self):
         """
@@ -22,7 +29,7 @@ class FixtureController(BaseController):
         Returns:
             QuerySet: All LightFixture objects.
         """
-        return self.model.objects.all()
+        return self.get_all()
     
     def get_fixture_by_id(self, fixture_id):
         """
@@ -34,10 +41,7 @@ class FixtureController(BaseController):
         Returns:
             LightFixture: The requested fixture or None if not found.
         """
-        try:
-            return LightFixture.objects.get(id=fixture_id)
-        except LightFixture.DoesNotExist:
-            return None
+        return self.get_by_id(fixture_id)
     
     def create_fixture(self, fixture_data):
         """
@@ -49,6 +53,45 @@ class FixtureController(BaseController):
         Returns:
             LightFixture: The newly created fixture.
         """
-        fixture = LightFixture(**fixture_data)
-        fixture.save()
-        return fixture
+        return self.create(fixture_data)
+    
+    def update_fixture(self, fixture_id, fixture_data):
+        """
+        Update an existing lighting fixture.
+        
+        Args:
+            fixture_id (int): ID of the fixture to update.
+            fixture_data (dict): Updated data for the fixture.
+            
+        Returns:
+            LightFixture: The updated fixture or None if not found.
+        """
+        return self.update(fixture_id, fixture_data)
+    
+    def delete_fixture(self, fixture_id):
+        """
+        Delete a lighting fixture.
+        
+        Args:
+            fixture_id (int): ID of the fixture to delete.
+            
+        Returns:
+            bool: True if successful, False otherwise.
+        """
+        return self.delete(fixture_id)
+    
+    def get_fixtures_by_type(self, fixture_type):
+        """
+        Get fixtures of a specific type.
+        
+        Args:
+            fixture_type (str): Type of fixtures to retrieve.
+            
+        Returns:
+            QuerySet: LightFixture objects of the specified type.
+        """
+        try:
+            return LightFixture.objects.filter(fixture_type=fixture_type)
+        except Exception as e:
+            logger.error(f"Error retrieving fixtures by type {fixture_type}: {e}")
+            return []
