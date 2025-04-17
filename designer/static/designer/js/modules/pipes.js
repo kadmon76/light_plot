@@ -10,6 +10,7 @@ import {
     pipeCounter, 
     selectedFixtures, 
     selectedPipe,
+    setSelectedPipe,
     currentTool,
     SCALE_FACTOR,
     getCanvasPoint
@@ -259,8 +260,8 @@ function setupPipesLibrary() {
                     });
                     selectedFixtures = [];
                     
-                    // Select this pipe
-                    selectedPipe = pipeElement;
+                    // Select this pipe - use the exported setSelectedPipe function
+                    setSelectedPipe(pipeElement);
                     pipeElement.addClass('selected');
                     
                     // Show properties (would need to add a pipe properties panel)

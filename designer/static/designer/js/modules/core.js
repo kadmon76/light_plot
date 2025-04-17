@@ -138,6 +138,12 @@ function setActiveTool(tool) {
     console.log(`Active tool set to: ${tool}`);
 }
 
+// Function to set the selected pipe
+function setSelectedPipe(pipe) {
+    selectedPipe = pipe;
+    console.log(`Selected pipe set to: ${pipe ? pipe.id() : 'null'}`);
+}
+
 // Helper function to get CSRF token
 function getCsrfToken() {
     const cookieValue = document.cookie
@@ -275,6 +281,7 @@ export {
     centerView,
     updateViewport,
     setActiveTool,
+    setSelectedPipe,
     getCsrfToken,
     showToast,
     zoomCanvas,
