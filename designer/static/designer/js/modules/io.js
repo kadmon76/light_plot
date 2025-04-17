@@ -15,8 +15,26 @@ import {
     showToast 
 } from './core.js';
 
-import { loadPipe, userPipeInventory } from './pipes.js';
-import { loadFixture, userFixtureInventory } from './fixtures.js';
+// Import with fallbacks for inventory arrays
+let userPipeInventory = [];
+let userFixtureInventory = [];
+
+import { loadPipe } from './pipes.js';
+import { loadFixture } from './fixtures.js';
+
+// Dynamically import pipe inventory
+import('./pipes.js').then(pipesModule => {
+    if (pipesModule.userPipeInventory) {
+        userPipeInventory = pipesModule.userPipeInventory;
+    }
+}).catch(error => console.warn('Could not load pipe inventory:', error));
+
+// Dynamically import fixture inventory
+import('./fixtures.js').then(fixturesModule => {
+    if (fixturesModule.userFixtureInventory) {
+        userFixtureInventory = fixturesModule.userFixtureInventory;
+    }
+}).catch(error => console.warn('Could not load fixture inventory:', error));
 
 // Save the current plot
 function savePlot() {

@@ -266,5 +266,5 @@
         document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"><\/script>');
     }
 </script>
-<script src="{% static 'designer/js/modules/editor.js' %}" type="module"></script>
+<script src="{% static 'designer/js/modules/editor.js' %}?v={% now 'U' %}" type="module"></script>
 {% endblock %}
