@@ -204,10 +204,99 @@ body {
 
 /* Form elements in properties panel */
 #fixture-properties-form label,
-#stage-properties-form label {
+#stage-properties-form label,
+#pipe-properties-form label {
     font-size: 0.8rem;
     font-weight: 500;
     margin-bottom: 2px;
+}
+
+/* User Inventory Styles */
+.inventory-type-header {
+    font-weight: bold;
+    padding: 8px 0;
+    margin-top: 10px;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.inventory-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+    transition: all 0.2s ease;
+}
+
+.inventory-item:hover {
+    background-color: #e9ecef;
+    border-color: #ddd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.inventory-item-preview {
+    margin-right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 30px;
+}
+
+.inventory-item-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    font-size: 0.8rem;
+}
+
+.inventory-item-info span {
+    margin: 1px 0;
+}
+
+/* Handles for resizing and rotation */
+.resize-handle {
+    cursor: ew-resize;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.resize-handle:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.rotation-handle {
+    cursor: grab;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+}
+
+.rotation-handle:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.rotation-handle:active {
+    cursor: grabbing;
+}
+
+/* Properties panels */
+#fixture-properties, #pipe-properties {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Locked elements */
+[data-locked="true"] {
+    cursor: not-allowed !important;
 }
 
 /* Responsive adjustments */

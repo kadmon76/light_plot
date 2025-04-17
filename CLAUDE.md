@@ -21,3 +21,4 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Templates**: Use Django template inheritance with base.html
 - **File Structure**: Modular organization - models/ for model modules
 - **JavaScript**: Use ES6 syntax; organize code with proper namespacing
+- **Doc String**: create a enhance doc string 

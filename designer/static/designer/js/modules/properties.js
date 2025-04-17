@@ -7,7 +7,8 @@
 import { 
     gridGroup, 
     selectedFixtures, 
-    selectedPipe 
+    selectedPipe,
+    setSelectedPipe 
 } from './core.js';
 
 import { showFixtureProperties } from './fixtures.js';
@@ -50,13 +51,17 @@ function setupPropertyPanel() {
         if (event.target.id === 'canvas' || event.target.tagName === 'svg') {
             // Deselect all
             selectedFixtures.forEach(f => {
-                f.stroke({ width: 0 });
+                if (f && typeof f.stroke === 'function') {
+                    f.stroke({ width: 0 });
+                }
             });
-            selectedFixtures = [];
+            // Clear the array without reassigning
+            selectedFixtures.length = 0;
             
             if (selectedPipe) {
                 selectedPipe.removeClass('selected');
-                selectedPipe = null;
+                // Use the imported function to set selectedPipe to null
+                setSelectedPipe(null);
             }
             
             // Hide property panels

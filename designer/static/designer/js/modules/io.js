@@ -15,7 +15,8 @@ import {
     showToast 
 } from './core.js';
 
-import { loadPipe } from './pipes.js';
+import { loadPipe, userPipeInventory } from './pipes.js';
+import { loadFixture, userFixtureInventory } from './fixtures.js';
 
 // Save the current plot
 function savePlot() {
@@ -40,14 +41,17 @@ function savePlot() {
         // Get other fixture data from attributes
         fixturesData.push({
             fixture_id: fixtureElement.attr('data-fixture-id'),
+            instance_id: fixtureElement.attr('data-fixture-instance-id'),
+            fixture_type: fixtureElement.attr('data-fixture-type') || 'Unknown',
             x: x,
             y: y,
-            rotation: fixtureElement.transform().rotation || 0,
+            rotation: parseInt(fixtureElement.attr('data-rotation')) || 0,
             channel: fixtureElement.attr('data-channel') || null,
             dimmer: fixtureElement.attr('data-dimmer') || null,
             color: fixtureElement.attr('data-color') || '',
             purpose: fixtureElement.attr('data-purpose') || '',
-            notes: fixtureElement.attr('data-notes') || ''
+            notes: fixtureElement.attr('data-notes') || '',
+            locked: fixtureElement.attr('data-locked') === 'true'
         });
     });
     
@@ -60,13 +64,16 @@ function savePlot() {
         // Get other pipe data from attributes
         pipesData.push({
             pipe_id: pipeElement.attr('data-pipe-id'),
+            pipe_instance_id: pipeElement.attr('data-pipe-instance-id'),
             pipe_name: pipeElement.attr('data-pipe-name'),
             pipe_type: pipeElement.attr('data-pipe-type'),
             pipe_length: pipeElement.attr('data-pipe-length'),
+            pipe_original_length: pipeElement.attr('data-pipe-original-length'),
             pipe_color: pipeElement.attr('data-pipe-color'),
             x: pipeElement.x(),
             y: pipeElement.y(),
-            rotation: pipeElement.transform().rotation || 0
+            rotation: parseInt(pipeElement.attr('data-rotation')) || 0,
+            locked: pipeElement.attr('data-locked') === 'true'
         });
     });
     
@@ -78,7 +85,12 @@ function savePlot() {
         },
         stageDimensions: stageDimensions,
         viewportInfo: viewportInfo,
-        pipes: pipesData
+        fixtures: fixturesData,
+        pipes: pipesData,
+        inventories: {
+            fixtures: userFixtureInventory,
+            pipes: userPipeInventory
+        }
     };
     
     // Prepare data for submission
@@ -165,14 +177,28 @@ function loadPlot(plotId) {
             // If there's plot data, restore viewbox and other settings
             if (data.plot.plot_data) {
                 if (data.plot.plot_data.viewportInfo) {
-                    viewportInfo = data.plot.plot_data.viewportInfo;
+                    // Copy properties to preserve references
+                    Object.assign(viewportInfo, data.plot.plot_data.viewportInfo);
                     updateViewport();
                 }
                 
                 if (data.plot.plot_data.stageDimensions) {
-                    stageDimensions = data.plot.plot_data.stageDimensions;
+                    // Copy properties to preserve references
+                    Object.assign(stageDimensions, data.plot.plot_data.stageDimensions);
                     // Will need to import and call drawDefaultStage here
                     // For now, stageDimension changes will be applied on next editor load
+                }
+                
+                // Load fixtures if they exist in plot data
+                if (data.plot.plot_data.fixtures && Array.isArray(data.plot.plot_data.fixtures)) {
+                    data.plot.plot_data.fixtures.forEach(fixture => {
+                        loadFixture(fixture);
+                    });
+                } else if (data.fixtures && Array.isArray(data.fixtures)) {
+                    // Load from the main fixtures array if not in plot_data
+                    data.fixtures.forEach(fixture => {
+                        loadFixture(fixture);
+                    });
                 }
                 
                 // Load pipes if they exist
@@ -182,12 +208,6 @@ function loadPlot(plotId) {
                     });
                 }
             }
-            
-            // Add fixtures to the plot
-            // Fixtures would be loaded here
-            // This functionality will need to be moved to the fixtures module
-            // For now, we'll just show a message
-            console.log('Plot contains', data.fixtures.length, 'fixtures to load');
             
             showToast('Success', 'Plot loaded successfully', 'success');
         })
