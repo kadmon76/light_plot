@@ -247,6 +247,11 @@ function getCanvasPoint(event) {
     }
 }
 
+// Function to update pipe counter
+function updatePipeCounter(value) {
+    pipeCounter = value;
+}
+
 // Export shared variables and functions
 export {
     // Constants
@@ -272,6 +277,7 @@ export {
     paperGroup,
     fohGroup,
     pipeCounter,
+    updatePipeCounter,
     paperSize,
     stageDimensions,
     viewportInfo,

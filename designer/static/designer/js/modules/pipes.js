@@ -8,6 +8,7 @@ import {
     draw, 
     pipesGroup, 
     pipeCounter, 
+    updatePipeCounter,
     selectedFixtures, 
     selectedPipe,
     setSelectedPipe,
@@ -41,7 +42,7 @@ function setupPipesLibrary() {
         document.getElementById('pipe-length').value = '10';
         
         // Increment counter for next pipe
-        pipeCounter++;
+        updatePipeCounter(pipeCounter + 1);
     });
     
     // Function to add pipe to the sidebar list
@@ -398,7 +399,7 @@ function loadPipe(pipeData) {
     // Update pipe counter if needed
     const pipeIdNum = parseInt(pipeId.replace('pipe-', ''), 10);
     if (!isNaN(pipeIdNum) && pipeIdNum >= pipeCounter) {
-        pipeCounter = pipeIdNum + 1;
+        updatePipeCounter(pipeIdNum + 1);
     }
 }
 
