@@ -63,6 +63,43 @@
         border: 1px solid #ddd;
         cursor: pointer;
     }
+    
+    /* Pipe styling */
+    .pipe-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+    
+    .pipe-preview {
+        height: 8px;
+        min-width: 30px;
+        background-color: #666;
+        margin-right: 10px;
+    }
+    
+    .pipe-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    /* Selected pipe styling */
+    .pipe-element.selected rect {
+        stroke: #ff0000;
+        stroke-width: 2px;
+        stroke-dasharray: 5, 5;
+    }
+    
+    /* Locked pipe styling */
+    [data-locked="true"] rect {
+        stroke: #009900;
+        stroke-width: 2px;
+    }
 </style>
 {% endblock %}
 
@@ -216,6 +253,40 @@
                             <label class="form-label">Notes</label>
                             <textarea class="form-control form-control-sm" id="notes" rows="2"></textarea>
                         </div>
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="fixture-locked">
+                                <label class="form-check-label">Lock in place</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div id="pipe-properties" style="display: none;">
+                    <h6>Pipe/Truss Properties</h6>
+                    <form id="pipe-properties-form">
+                        <div class="mb-2">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control form-control-sm" id="pipe-name">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Length (meters)</label>
+                            <input type="number" class="form-control form-control-sm" id="pipe-length" min="1" step="0.5">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Color</label>
+                            <select class="form-select form-select-sm" id="pipe-color">
+                                <option value="#666666">Silver</option>
+                                <option value="#333333">Dark Gray</option>
+                                <option value="#000000">Black</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="pipe-locked">
+                                <label class="form-check-label">Lock in place</label>
+                            </div>
+                        </div>
+                        <button type="button" id="apply-pipe-properties" class="btn btn-sm btn-primary mt-2">Apply Changes</button>
                     </form>
                 </div>
                 <div id="stage-properties">

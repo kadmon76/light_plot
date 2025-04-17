@@ -68,6 +68,12 @@ function setupPropertyPanel() {
             if (propertiesPanel) {
                 propertiesPanel.style.display = 'none';
             }
+            
+            // Also hide pipe properties panel
+            const pipePropertiesPanel = document.getElementById('pipe-properties');
+            if (pipePropertiesPanel) {
+                pipePropertiesPanel.style.display = 'none';
+            }
         }
     });
     

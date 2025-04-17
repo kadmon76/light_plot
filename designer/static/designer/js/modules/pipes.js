@@ -215,17 +215,24 @@ function setupPipesLibrary() {
                 'data-pipe-name': pipeName,
                 'data-pipe-type': pipeType,
                 'data-pipe-length': pipeLength,
-                'data-pipe-color': pipeColor
+                'data-pipe-original-length': pipeLength, // Store original length for reference
+                'data-pipe-color': pipeColor,
+                'data-locked': 'false'
             });
             
-            // Make pipe draggable
-            pipeElement.draggable()
-                .on('dragstart', function() {
-                    this.addClass('dragging');
-                })
-                .on('dragend', function() {
-                    this.removeClass('dragging');
-                });
+            // Set up draggability based on locked status
+            const isLocked = pipeElement.attr('data-locked') === 'true';
+            
+            // Make pipe draggable only if not locked
+            if (!isLocked) {
+                pipeElement.draggable()
+                    .on('dragstart', function() {
+                        this.addClass('dragging');
+                    })
+                    .on('dragend', function() {
+                        this.removeClass('dragging');
+                    });
+            }
             
             // Make pipe selectable
             makePipeSelectable(pipeElement);
@@ -265,8 +272,8 @@ function setupPipesLibrary() {
                     setSelectedPipe(pipeElement);
                     pipeElement.addClass('selected');
                     
-                    // Show properties (would need to add a pipe properties panel)
-                    // showPipeProperties(pipeElement);
+                    // Show pipe properties panel
+                    showPipeProperties(pipeElement);
                 }
             } catch (error) {
                 console.error('Error in pipe selection handler:', error);
@@ -379,17 +386,24 @@ function loadPipe(pipeData) {
         'data-pipe-name': pipeName,
         'data-pipe-type': pipeType,
         'data-pipe-length': pipeLength,
-        'data-pipe-color': pipeColor
+        'data-pipe-original-length': pipeData.pipe_original_length || pipeLength,
+        'data-pipe-color': pipeColor,
+        'data-locked': pipeData.locked || 'false'
     });
     
-    // Make pipe draggable
-    pipeElement.draggable()
-        .on('dragstart', function() {
-            this.addClass('dragging');
-        })
-        .on('dragend', function() {
-            this.removeClass('dragging');
-        });
+    // Set up draggability based on locked status
+    const isLocked = pipeElement.attr('data-locked') === 'true';
+    
+    // Make pipe draggable only if not locked
+    if (!isLocked) {
+        pipeElement.draggable()
+            .on('dragstart', function() {
+                this.addClass('dragging');
+            })
+            .on('dragend', function() {
+                this.removeClass('dragging');
+            });
+    }
     
     // Make pipe selectable
     makePipeSelectable(pipeElement);
@@ -406,8 +420,143 @@ function loadPipe(pipeData) {
 // Create the userPipeInventory array to store user-created pipes
 const userPipeInventory = [];
 
+// Show pipe properties
+function showPipeProperties(pipeElement) {
+    if (!pipeElement) return;
+    
+    // Get the pipe properties panel
+    const propertiesPanel = document.getElementById('pipe-properties');
+    if (!propertiesPanel) return;
+    
+    // Hide fixture properties panel if it's visible
+    const fixturePropertiesPanel = document.getElementById('fixture-properties');
+    if (fixturePropertiesPanel) {
+        fixturePropertiesPanel.style.display = 'none';
+    }
+    
+    // Show pipe properties panel
+    propertiesPanel.style.display = 'block';
+    
+    // Populate properties form
+    const nameInput = document.getElementById('pipe-name');
+    const lengthInput = document.getElementById('pipe-length');
+    const colorSelect = document.getElementById('pipe-color');
+    const lockedCheckbox = document.getElementById('pipe-locked');
+    
+    // Get pipe data from attributes
+    const pipeName = pipeElement.attr('data-pipe-name') || '';
+    const pipeLength = pipeElement.attr('data-pipe-length') || 10;
+    const pipeColor = pipeElement.attr('data-pipe-color') || '#666666';
+    const pipeLocked = pipeElement.attr('data-locked') === 'true';
+    
+    // Set form values
+    if (nameInput) nameInput.value = pipeName;
+    if (lengthInput) lengthInput.value = pipeLength;
+    if (colorSelect) colorSelect.value = pipeColor;
+    if (lockedCheckbox) lockedCheckbox.checked = pipeLocked;
+    
+    // Handle apply changes button
+    const applyButton = document.getElementById('apply-pipe-properties');
+    if (applyButton) {
+        // Remove existing event listeners
+        const newApplyButton = applyButton.cloneNode(true);
+        applyButton.parentNode.replaceChild(newApplyButton, applyButton);
+        
+        // Add new event listener
+        newApplyButton.addEventListener('click', function() {
+            applyPipeProperties(pipeElement);
+        });
+    }
+}
+
+// Apply pipe properties from the form to the pipe element
+function applyPipeProperties(pipeElement) {
+    if (!pipeElement) return;
+    
+    // Get form values
+    const nameInput = document.getElementById('pipe-name');
+    const lengthInput = document.getElementById('pipe-length');
+    const colorSelect = document.getElementById('pipe-color');
+    const lockedCheckbox = document.getElementById('pipe-locked');
+    
+    const newName = nameInput ? nameInput.value : '';
+    const newLength = lengthInput ? parseFloat(lengthInput.value) : 10;
+    const newColor = colorSelect ? colorSelect.value : '#666666';
+    const newLocked = lockedCheckbox ? lockedCheckbox.checked : false;
+    
+    // Update pipe attributes
+    pipeElement.attr({
+        'data-pipe-name': newName,
+        'data-pipe-length': newLength,
+        'data-pipe-color': newColor,
+        'data-locked': newLocked
+    });
+    
+    // Update pipe visuals
+    updatePipeVisuals(pipeElement, newLength, newColor);
+    
+    // Update pipe draggability based on locked status
+    if (newLocked) {
+        // Disable dragging
+        if (pipeElement.draggable) {
+            pipeElement.draggable(false);
+        }
+    } else {
+        // Enable dragging
+        if (pipeElement.draggable) {
+            pipeElement.draggable(true);
+        }
+    }
+    
+    console.log(`Updated pipe properties: Name=${newName}, Length=${newLength}, Color=${newColor}, Locked=${newLocked}`);
+}
+
+// Update pipe visuals based on properties
+function updatePipeVisuals(pipeElement, newLength, newColor) {
+    if (!pipeElement) return;
+    
+    try {
+        // Calculate dimensions based on length
+        const pipeWidthPx = newLength * SCALE_FACTOR * 10; // 10px per meter
+        const pipeHeightPx = pipeElement.attr('data-pipe-type') === 'truss' ? 15 : 8;
+        
+        // Get the rectangle element (first child of the group)
+        const pipeRect = pipeElement.findOne('rect');
+        if (pipeRect) {
+            // Update size and color
+            pipeRect.size(pipeWidthPx, pipeHeightPx).fill(newColor);
+            
+            // Update truss pattern if it's a truss
+            if (pipeElement.attr('data-pipe-type') === 'truss') {
+                try {
+                    // Add visual pattern for truss
+                    const pattern = draw.pattern(20, pipeHeightPx, function(add) {
+                        add.line(0, 0, 10, pipeHeightPx).stroke({ width: 1, color: 'rgba(255,255,255,0.3)' });
+                        add.line(10, 0, 20, pipeHeightPx).stroke({ width: 1, color: 'rgba(255,255,255,0.3)' });
+                    });
+                    
+                    pipeRect.fill(pattern);
+                } catch (patternError) {
+                    console.error('Error creating truss pattern:', patternError);
+                    // Fallback to solid fill if pattern creation fails
+                    pipeRect.fill(newColor);
+                }
+            }
+        }
+        
+        // Update label position
+        const pipeLabel = pipeElement.findOne('text');
+        if (pipeLabel) {
+            pipeLabel.center(pipeWidthPx / 2, pipeHeightPx / 2 - 15);
+        }
+    } catch (error) {
+        console.error('Error updating pipe visuals:', error);
+    }
+}
+
 export { 
     setupPipesLibrary,
     loadPipe,
-    userPipeInventory
+    userPipeInventory,
+    showPipeProperties
 };
