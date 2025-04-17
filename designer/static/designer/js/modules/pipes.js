@@ -270,7 +270,15 @@ function setupPipesLibrary() {
                     
                     // Select this pipe - use the exported setSelectedPipe function
                     setSelectedPipe(pipeElement);
-                    pipeElement.addClass('selected');
+                    
+                    // Add selected class to highlight the pipe
+                    pipeElement.removeClass('selected').addClass('selected');
+                    
+                    // Ensure the selection is visible with outline
+                    const pipeRect = pipeElement.findOne('rect');
+                    if (pipeRect) {
+                        pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+                    }
                     
                     // Show pipe properties panel
                     showPipeProperties(pipeElement);
@@ -501,10 +509,26 @@ function applyPipeProperties(pipeElement) {
         if (pipeElement.draggable) {
             pipeElement.draggable(false);
         }
+        
+        // Show locked state with green stroke
+        const pipeRect = pipeElement.findOne('rect');
+        if (pipeRect) {
+            pipeRect.stroke({ width: 2, color: '#009900' });
+        }
     } else {
         // Enable dragging
         if (pipeElement.draggable) {
             pipeElement.draggable(true);
+        }
+        
+        // If pipe is selected, show selection stroke, otherwise normal stroke
+        const pipeRect = pipeElement.findOne('rect');
+        if (pipeRect) {
+            if (pipeElement.hasClass('selected')) {
+                pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+            } else {
+                pipeRect.stroke({ width: 1, color: '#000' });
+            }
         }
     }
     
@@ -523,8 +547,20 @@ function updatePipeVisuals(pipeElement, newLength, newColor) {
         // Get the rectangle element (first child of the group)
         const pipeRect = pipeElement.findOne('rect');
         if (pipeRect) {
-            // Update size and color
+            // Get current stroke style
+            const currentStroke = pipeRect.attr('stroke') || '#000';
+            const currentStrokeWidth = pipeRect.attr('stroke-width') || 1;
+            const currentDasharray = pipeRect.attr('stroke-dasharray') || '';
+            
+            // Update size and color while preserving stroke
             pipeRect.size(pipeWidthPx, pipeHeightPx).fill(newColor);
+            
+            // Restore stroke
+            pipeRect.stroke({
+                color: currentStroke,
+                width: currentStrokeWidth,
+                dasharray: currentDasharray
+            });
             
             // Update truss pattern if it's a truss
             if (pipeElement.attr('data-pipe-type') === 'truss') {

@@ -59,7 +59,23 @@ function setupPropertyPanel() {
             selectedFixtures.length = 0;
             
             if (selectedPipe) {
+                // Clear selection styling
                 selectedPipe.removeClass('selected');
+                
+                // Reset stroke unless the pipe is locked
+                const pipeRect = selectedPipe.findOne('rect');
+                const isLocked = selectedPipe.attr('data-locked') === 'true';
+                
+                if (pipeRect) {
+                    if (isLocked) {
+                        // Keep green stroke for locked pipes
+                        pipeRect.stroke({ width: 2, color: '#009900' });
+                    } else {
+                        // Reset to default stroke
+                        pipeRect.stroke({ width: 1, color: '#000' });
+                    }
+                }
+                
                 // Use the imported function to set selectedPipe to null
                 setSelectedPipe(null);
             }
