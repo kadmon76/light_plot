@@ -158,3 +158,49 @@ class PlotController(BaseController):
             
         plot.delete()
         return True
+    
+    def get_plot_with_fixtures(self, plot_id, user):
+        """
+        Get complete plot data including fixtures.
+        
+        Args:
+            plot_id (int): ID of the plot to retrieve
+            user (User): User requesting the plot
+            
+        Returns:
+            dict: Dictionary with plot and fixtures data or None if plot not found
+        """
+        plot = self.get_plot_by_id(plot_id, user)
+        if not plot:
+            return None
+            
+        fixtures = plot.fixtures.all()
+        
+        fixtures_data = []
+        for fixture in fixtures:
+            fixtures_data.append({
+                'id': fixture.id,
+                'fixture_id': fixture.fixture_type.id,
+                'x': fixture.x_position,
+                'y': fixture.y_position,
+                'rotation': fixture.rotation,
+                'channel': fixture.channel,
+                'dimmer': fixture.dimmer,
+                'color': fixture.color,
+                'purpose': fixture.purpose,
+                'notes': fixture.notes
+            })
+    
+        return {
+            'plot': {
+                'id': plot.id,
+                'title': plot.title,
+                'stage_id': plot.stage.id,
+                'show_name': plot.show_name,
+                'venue': plot.venue,
+                'designer': plot.designer,
+                'date': plot.date.isoformat() if plot.date else None,
+                'plot_data': plot.plot_data
+            },
+            'fixtures': fixtures_data
+        }

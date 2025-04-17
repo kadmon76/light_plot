@@ -13,15 +13,16 @@ class FixtureController(BaseController):
     def __init__(self):
         """Initialize the fixture controller"""
         super().__init__()
+        self.model = LightFixture
     
     def get_all_fixtures(self):
         """
-        Retrieve all lighting fixtures in the system.
+        Get all light fixtures.
         
         Returns:
             QuerySet: All LightFixture objects.
         """
-        return LightFixture.objects.all()
+        return self.model.objects.all()
     
     def get_fixture_by_id(self, fixture_id):
         """

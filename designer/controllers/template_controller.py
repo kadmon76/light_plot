@@ -16,12 +16,12 @@ class TemplateController(BaseController):
     
     def get_all_templates(self):
         """
-        Retrieve all stage templates in the system.
+        Get all stage templates.
         
         Returns:
             QuerySet: All StageTemplate objects.
         """
-        return StageTemplate.objects.all()
+        return self.model.objects.all()
     
     def get_templates_by_type(self, template_type):
         """

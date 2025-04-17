@@ -21,7 +21,7 @@ class StageController(BaseController):
         Returns:
             QuerySet: All Stage objects.
         """
-        return Stage.objects.all()
+        return self.model.objects.all()
     
     def get_stage_by_id(self, stage_id):
         """
