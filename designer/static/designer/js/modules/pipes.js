@@ -402,7 +402,11 @@ function loadPipe(pipeData) {
     }
 }
 
+// Create the userPipeInventory array to store user-created pipes
+const userPipeInventory = [];
+
 export { 
     setupPipesLibrary,
-    loadPipe
+    loadPipe,
+    userPipeInventory
 };
