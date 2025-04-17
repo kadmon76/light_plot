@@ -24,30 +24,35 @@ Light Plot Designer is a Django-based application that allows lighting designers
 - ✅ Pipe/truss placement and manipulation
 - ✅ Basic saving and loading of plots
 - ✅ Modular JavaScript architecture
+- ✅ Model-Controller-Presenter (MCP) architecture
+- ✅ Pipe/truss enhancements
+  - Ability to stretch/resize pipes through properties panel
+  - Locking pipes in place to prevent movement
+  - Visual indicators for selected and locked pipes
 
 ### In Progress
-- 🔄 Pipe/truss enhancements
-  - Ability to stretch/resize pipes
-  - Unique naming validation for pipes
-  - Fix deletion of pipes from canvas
+- 🔄 Fixture enhancements
+  - Locking fixtures in place
+  - Improving fixture selection and property editing
 - 🔄 Stage measurement display
   - Toggle-able measurements
   - Improved stage representation
 
 ### Planned Features
-- 📋 Locking fixtures and pipes in place
 - 📋 Fixture focus and beam visualization
 - 📋 DMX addressing and patch integration
 - 📋 Plot export (PDF, DWG)
 - 📋 Collaboration features
 - 📋 Detailed inventory reports
+- 📋 Direct manipulation handles for pipe stretching
 
 ## Code Structure
 
 - `/designer` - Django app for the lighting plot designer
   - `/models` - Database models for plots, fixtures, stages
-  - `/static/designer/js` - JavaScript code
-    - `/modules` - Modular JavaScript components
+  - `/controllers` - Business logic layer for MCP architecture
+  - `/presenters` - UI logic layer for MCP architecture
+  - `/static/designer/js/modules` - Modular JavaScript components
   - `/templates` - HTML templates
 
 ## Running the Project
@@ -59,6 +64,10 @@ Light Plot Designer is a Django-based application that allows lighting designers
 
 ## Technical Notes
 
+- Model-Controller-Presenter (MCP) architecture for cleaner code organization
 - The JavaScript codebase uses ES6 modules for better organization and reduced memory usage
-- SVG.js is used for vector manipulation
-- Bootstrap is used for UI components
+- SVG.js is used for vector graphics manipulation
+- Bootstrap is used for responsive UI components
+- JavaScript module pattern with proper import/export for code organization
+- Enhanced caching mechanisms to reduce API costs
+- Robust error handling throughout the application
