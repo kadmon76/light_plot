@@ -113,7 +113,7 @@ export class LockableBehavior extends BaseBehavior {
      * Apply locked visual state
      * @private
      */
-    _applyLockedState() {
+     _applyLockedState() {
         if (!this._element) return;
         
         const svgElement = this._element.svgElement();
@@ -122,28 +122,62 @@ export class LockableBehavior extends BaseBehavior {
         // Apply CSS class if specified
         if (this._options.lockedClass) {
             svgElement.addClass(this._options.lockedClass);
+            svgElement.attr('data-locked', 'true');
         }
         
-        // Apply SVG styles if specified
-        if (this._options.lockedStyles) {
-            const styles = this._options.lockedStyles;
-            Object.entries(styles).forEach(([key, value]) => {
-                // Store original value before changing
-                const origValue = svgElement.attr(key);
-                if (origValue !== undefined && !svgElement._origLockedStyles) {
-                    svgElement._origLockedStyles = svgElement._origLockedStyles || {};
-                    svgElement._origLockedStyles[key] = origValue;
-                }
-                
-                // Apply new style
-                svgElement.attr(key, value);
+        // Apply specific visual indicator based on element type
+        const elementType = this._element.type();
+        
+        // Find main shape element to apply stroke
+        let mainShape = null;
+        if (elementType === 'pipe') {
+            mainShape = svgElement.findOne('rect');
+        } else if (elementType === 'fixture') {
+            mainShape = svgElement.findOne('circle');
+        }
+        
+        if (mainShape) {
+            // Store original styles before changing
+            if (!svgElement._origLockedStyles) {
+                svgElement._origLockedStyles = {
+                    stroke: mainShape.attr('stroke'),
+                    'stroke-width': mainShape.attr('stroke-width'),
+                    'stroke-dasharray': mainShape.attr('stroke-dasharray')
+                };
+            }
+            
+            // Apply locked style
+            mainShape.stroke({ 
+                width: 2, 
+                color: '#009900',
+                dasharray: elementType === 'fixture' ? '4,3' : '' 
             });
         }
+        
+        // Disable dragging by using the behavior manager
+        if (this._element.hasBehavior('draggable')) {
+            const draggableBehavior = this._element.getBehavior('draggable');
+            if (draggableBehavior) {
+                draggableBehavior.setEnabled(false);
+            }
+        }
+        
+        // Hide any rotation handles
+        if (this._element.hasBehavior('rotatable')) {
+            const rotatableBehavior = this._element.getBehavior('rotatable');
+            if (rotatableBehavior) {
+                rotatableBehavior.setEnabled(false);
+            }
+        }
     }
+    
     
     /**
      * Remove locked visual state
      * @private
+     */
+    /**
+     * Enhance _removeLockedState method to properly restore visual state
      */
     _removeLockedState() {
         if (!this._element) return;
@@ -151,17 +185,53 @@ export class LockableBehavior extends BaseBehavior {
         const svgElement = this._element.svgElement();
         if (!svgElement) return;
         
-        // Remove CSS class if specified
+        // Remove CSS class and data attribute
         if (this._options.lockedClass) {
             svgElement.removeClass(this._options.lockedClass);
+            svgElement.attr('data-locked', 'false');
         }
         
-        // Restore original SVG styles
-        if (this._options.lockedStyles && svgElement._origLockedStyles) {
-            Object.entries(svgElement._origLockedStyles).forEach(([key, value]) => {
-                svgElement.attr(key, value);
-            });
+        // Find main shape element to restore stroke
+        const elementType = this._element.type();
+        let mainShape = null;
+        if (elementType === 'pipe') {
+            mainShape = svgElement.findOne('rect');
+        } else if (elementType === 'fixture') {
+            mainShape = svgElement.findOne('circle');
+        }
+        
+        if (mainShape && svgElement._origLockedStyles) {
+            // Check if element is selected to determine proper stroke
+            if (this._element.isSelected && this._element.isSelected()) {
+                // Apply selection style
+                if (elementType === 'pipe') {
+                    mainShape.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+                } else {
+                    mainShape.stroke({ width: 2, color: '#ff0000' });
+                }
+            } else {
+                // Restore original styles
+                mainShape.stroke(svgElement._origLockedStyles);
+            }
+            
+            // Clean up stored styles
             delete svgElement._origLockedStyles;
+        }
+        
+        // Re-enable dragging
+        if (this._element.hasBehavior('draggable')) {
+            const draggableBehavior = this._element.getBehavior('draggable');
+            if (draggableBehavior) {
+                draggableBehavior.setEnabled(true);
+            }
+        }
+        
+        // Re-enable rotation if element is selected
+        if (this._element.hasBehavior('rotatable') && this._element.isSelected()) {
+            const rotatableBehavior = this._element.getBehavior('rotatable');
+            if (rotatableBehavior) {
+                rotatableBehavior.setEnabled(true);
+            }
         }
     }
 }

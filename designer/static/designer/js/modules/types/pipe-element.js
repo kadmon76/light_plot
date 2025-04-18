@@ -49,7 +49,7 @@ export class PipeElement extends BaseElement {
         }
         
         // Apply default behaviors
-        const behaviors = options.behaviors || ['selectable', 'draggable', 'lockable'];
+        const behaviors = options.behaviors || ['selectable', 'draggable', 'lockable', 'rotatable'];
         this._applyBehaviors(behaviors);
     }
     
@@ -220,7 +220,19 @@ export class PipeElement extends BaseElement {
             pipeLabel.center(pipeWidthPx / 2, pipeHeightPx / 2 - 15);
         }
     }
-    
+    // Add the lock method here
+    lock(state = true) {
+        super.lock(state);
+        
+        // Additional element-specific lock behavior can be added here
+        // Set data attribute for CSS targeting
+        const svgElement = this._svgElement;
+        if (svgElement) {
+            svgElement.attr('data-locked', state ? 'true' : 'false');
+        }
+        
+        return this;
+    }
     /**
      * Get pipe data for serialization
      * @return {Object} Serialized pipe data

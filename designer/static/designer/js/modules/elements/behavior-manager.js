@@ -13,6 +13,7 @@ import { DraggableBehavior } from './behaviors/draggable.js';
 import { SelectableBehavior } from './behaviors/selectable.js';
 import { LockableBehavior } from './behaviors/lockable.js';
 import { ResizableBehavior } from './behaviors/resizable.js';
+import { RotatableBehavior } from './behaviors/rotatable.js';
 
 /**
  * BehaviorManager class
@@ -30,6 +31,7 @@ export class BehaviorManager extends EventEmitter {
         this.registerBehavior('selectable', (options) => new SelectableBehavior(options));
         this.registerBehavior('lockable', (options) => new LockableBehavior(options));
         this.registerBehavior('resizable', (options) => new ResizableBehavior(options));
+        this.registerBehavior('rotatable', (options) => new RotatableBehavior(options));
     }
     
     /**

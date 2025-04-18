@@ -179,11 +179,20 @@ export class DraggableBehavior extends BaseBehavior {
      * @param {Event} event - Mouse event
      * @private
      */
+    /**
+ * Improve the _handleMouseUp method to ensure proper cleanup
+ */
     _handleMouseUp(event) {
         if (!this._isDragging) return;
         
         // Get final position
         const finalPosition = this._element.position();
+        
+        // Remove dragging class
+        const svgElement = this._element.svgElement();
+        if (svgElement) {
+            svgElement.removeClass('dragging');
+        }
         
         // End drag tracking
         this._endDrag();

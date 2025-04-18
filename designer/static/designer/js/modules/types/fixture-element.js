@@ -51,7 +51,7 @@ export class FixtureElement extends BaseElement {
         }
         
         // Apply default behaviors
-        const behaviors = options.behaviors || ['selectable', 'draggable', 'lockable'];
+        const behaviors = options.behaviors || ['selectable', 'draggable', 'lockable', 'rotatable'];
         this._applyBehaviors(behaviors);
     }
     
