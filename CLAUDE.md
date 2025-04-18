@@ -20,6 +20,19 @@ The project follows the Model-Controller-Presenter (MCP) architecture:
 - **Presenters**: Handle UI logic and preparing data for views
 - **Views**: Handle rendering templates and user interaction
 
+The frontend JavaScript follows a behavior-based architecture:
+- **Base Elements**: Core functionality shared by all elements
+- **Behaviors**: Composable pieces of functionality (draggable, selectable, etc.)
+- **Element Types**: Specific implementations (pipes, fixtures)
+- **UI Components**: User interface elements and interactions
+
+## Architecture Principles
+- **DRY (Don't Repeat Yourself)**: Identify common functionality and create reusable components
+- **Single Responsibility**: Each module/class has one clear purpose
+- **Composable Behaviors**: Elements are built by composing multiple behaviors
+- **Command Pattern**: Used for undoable operations
+- **Event System**: For loose coupling between components
+
 ## Code Style Guidelines
 - **Formatting**: Follow PEP 8 style guide for Python code
 - **Imports**: Group imports: 1) Python standard library 2) Django modules 3) Third-party packages 4) Local modules
@@ -32,7 +45,14 @@ The project follows the Model-Controller-Presenter (MCP) architecture:
 - **Doc String**: Use descriptive docstrings for all functions and classes
 
 ## JavaScript Organization
-- All JavaScript is organized into ES6 modules in the `static/designer/js/modules/` directory
+- All JavaScript is organized into ES6 modules
+- Follows DRY principle with reusable components
+- Core directory structure:
+  - `/modules/elements/` - Base element and registry
+  - `/modules/elements/behaviors/` - Reusable behaviors
+  - `/modules/elements/commands/` - Undoable operations
+  - `/modules/types/` - Element implementations
+  - `/modules/ui/` - UI components
 - Use proper import/export syntax for module dependencies
 - Handle errors gracefully in try/catch blocks
 - Use consistent naming conventions for functions and variables

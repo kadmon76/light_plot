@@ -292,70 +292,85 @@ function setupPipesLibrary() {
         }
     }
     
-    // Make a pipe selectable
-    function makePipeSelectable(pipeElement) {
-        if (!pipeElement || typeof pipeElement.click !== 'function') {
-            console.error('Invalid pipe element provided to makePipeSelectable');
-            return;
-        }
-        
-        // Use mousedown/mouseup instead of click for better control
-        let mouseDownTime = 0;
-        let mouseDownPos = { x: 0, y: 0 };
-        
-        pipeElement.node.addEventListener('mousedown', function(event) {
-            // Store mousedown position and time
-            mouseDownPos = { x: event.clientX, y: event.clientY };
-            mouseDownTime = Date.now();
-        });
-        
-        pipeElement.node.addEventListener('mouseup', function(event) {
-            try {
-                // Calculate if this was a click (short duration, small movement)
-                const moveTime = Date.now() - mouseDownTime;
-                const dx = event.clientX - mouseDownPos.x;
-                const dy = event.clientY - mouseDownPos.y;
-                const distance = Math.sqrt(dx*dx + dy*dy);
+// Make a pipe selectable
+function makePipeSelectable(pipeElement) {
+    if (!pipeElement || typeof pipeElement.click !== 'function') {
+        console.error('Invalid pipe element provided to makePipeSelectable');
+        return;
+    }
+    
+    // Set up draggable behavior with proper event handling
+    const isLocked = pipeElement.attr('data-locked') === 'true';
+    
+    if (!isLocked) {
+        pipeElement.draggable()
+            .on('dragstart', function(e) {
+                // Prevent event from reaching the canvas
+                e.stopPropagation();
+                this.addClass('dragging');
+                console.log('Pipe drag started');
+            })
+            .on('dragend', function(e) {
+                // Clean up after drag ends
+                this.removeClass('dragging');
+                console.log('Pipe drag ended');
                 
-                // Only consider it a click if it was a short duration and small movement
-                if (moveTime < 300 && distance < 5 && currentTool === 'select') {
-                    // This is a click, not a drag
-                    event.stopPropagation();
-                    
-                    console.log('Pipe clicked (not dragged)');
-                    
-                    // Deselect previously selected items
-                    if (selectedPipe && typeof selectedPipe.removeClass === 'function') {
-                        selectedPipe.removeClass('selected');
+                // Redraw with the final position
+                const x = this.x();
+                const y = this.y();
+                console.log(`Pipe final position: ${x}, ${y}`);
+            });
+    }
+    
+    // Handle selection behavior separately from dragging
+    pipeElement.click(function(event) {
+        // Only handle selection when in select mode
+        if (currentTool === 'select') {
+            event.stopPropagation();
+            
+            console.log('Pipe clicked for selection');
+            
+            // Deselect previously selected items
+            if (selectedPipe && typeof selectedPipe.removeClass === 'function') {
+                selectedPipe.removeClass('selected');
+                
+                // Reset stroke unless the pipe is locked
+                const prevPipeRect = selectedPipe.findOne('rect');
+                const prevPipeLocked = selectedPipe.attr('data-locked') === 'true';
+                
+                if (prevPipeRect) {
+                    if (prevPipeLocked) {
+                        // Keep green stroke for locked pipes
+                        prevPipeRect.stroke({ width: 2, color: '#009900' });
+                    } else {
+                        // Reset to default stroke
+                        prevPipeRect.stroke({ width: 1, color: '#000' });
                     }
-                    
-                    selectedFixtures.forEach(f => {
-                        if (f && typeof f.stroke === 'function') {
-                            f.stroke({ width: 0 });
-                        }
-                    });
-                    clearSelectedFixtures(); // Use the exported function to clear array
-                    
-                    // Select this pipe - use the exported setSelectedPipe function
-                    setSelectedPipe(pipeElement);
-                    
-                    // Add selected class to highlight the pipe
-                    pipeElement.removeClass('selected').addClass('selected');
-                    
-                    // Ensure the selection is visible with outline
-                    const pipeRect = pipeElement.findOne('rect');
-                    if (pipeRect) {
-                        pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
-                    }
-                    
-                    // Show pipe properties panel
-                    showPipeProperties(pipeElement);
                 }
-            } catch (error) {
-                console.error('Error in pipe selection handler:', error);
             }
-        });
-        
+            
+            selectedFixtures.forEach(f => {
+                if (f && typeof f.stroke === 'function') {
+                    f.stroke({ width: 0 });
+                }
+            });
+            clearSelectedFixtures();
+            
+            // Select this pipe
+            setSelectedPipe(pipeElement);
+            pipeElement.addClass('selected');
+            
+            // Ensure the selection is visible with outline
+            const pipeRect = pipeElement.findOne('rect');
+            if (pipeRect) {
+                pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+            }
+            
+            // Show pipe properties panel
+            showPipeProperties(pipeElement);
+        }
+    });
+           
         // Keep click handler as well for compatibility, but with the same checks
         pipeElement.click(function(event) {
             try {

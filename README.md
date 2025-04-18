@@ -29,8 +29,12 @@ Light Plot Designer is a Django-based application that allows lighting designers
   - Ability to stretch/resize pipes through properties panel
   - Locking pipes in place to prevent movement
   - Visual indicators for selected and locked pipes
+- ✅ Fixed pipe dragging behavior
 
 ### In Progress
+- 🔄 Modular behavior system refactoring
+  - Implementing DRY principle with shared behaviors
+  - Creating behavior-based architecture for elements
 - 🔄 Fixture enhancements
   - Locking fixtures in place
   - Improving fixture selection and property editing
@@ -53,7 +57,20 @@ Light Plot Designer is a Django-based application that allows lighting designers
   - `/controllers` - Business logic layer for MCP architecture
   - `/presenters` - UI logic layer for MCP architecture
   - `/static/designer/js/modules` - Modular JavaScript components
+    - `/elements` - Core element functionality (base element, behaviors)
+    - `/behaviors` - Composable behaviors (dragging, rotating, etc.)
+    - `/types` - Element type implementations (pipes, fixtures, etc.)
+    - `/ui` - UI components (properties panel, selection, etc.)
   - `/templates` - HTML templates
+
+## Architecture Principles
+
+The project follows these key principles:
+- **DRY (Don't Repeat Yourself)** - Identify common functionality across different elements and create reusable, shared components rather than duplicating code
+- **Single Responsibility** - Each module has a clear, focused purpose
+- **Composable Behaviors** - Elements are built from reusable behaviors
+- **Command Pattern** - For undoable operations
+- **Event-based communication** - For loose coupling between components
 
 ## Running the Project
 
@@ -61,13 +78,3 @@ Light Plot Designer is a Django-based application that allows lighting designers
 2. Apply migrations: `python manage.py migrate`
 3. Run the server: `python manage.py runserver`
 4. Access the application at http://localhost:8000
-
-## Technical Notes
-
-- Model-Controller-Presenter (MCP) architecture for cleaner code organization
-- The JavaScript codebase uses ES6 modules for better organization and reduced memory usage
-- SVG.js is used for vector graphics manipulation
-- Bootstrap is used for responsive UI components
-- JavaScript module pattern with proper import/export for code organization
-- Enhanced caching mechanisms to reduce API costs
-- Robust error handling throughout the application
