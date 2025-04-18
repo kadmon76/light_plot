@@ -11,7 +11,8 @@ import {
     currentTool, 
     setActiveTool,
     getCanvasPoint,
-    showToast
+    showToast,
+    clearSelectedFixtures
 } from './core.js';
 
 // Track user's fixture inventory
@@ -195,7 +196,8 @@ function setupFixtureLibrary() {
                     });
                     
                     // Select this fixture
-                    selectedFixtures = [fixtureElement];
+                    clearSelectedFixtures();
+                    selectedFixtures.push(fixtureElement);
                     fixtureElement.stroke({ width: 2, color: '#ff3300' });
                     
                     // Show properties
@@ -290,7 +292,7 @@ function setupFixtureLibrary() {
         });
         
         // Clear selection
-        selectedFixtures = [];
+        clearSelectedFixtures();
         
         // Hide properties panel
         const propertiesPanel = document.getElementById('fixture-properties');

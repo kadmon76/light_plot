@@ -144,6 +144,13 @@ function setSelectedPipe(pipe) {
     console.log(`Selected pipe set to: ${pipe ? pipe.id() : 'null'}`);
 }
 
+// Function to clear selected fixtures
+function clearSelectedFixtures() {
+    // Clear all items from the array without reassigning
+    selectedFixtures.length = 0;
+    console.log('Cleared selected fixtures array');
+}
+
 // Helper function to get CSRF token
 function getCsrfToken() {
     const cookieValue = document.cookie
@@ -288,6 +295,7 @@ export {
     updateViewport,
     setActiveTool,
     setSelectedPipe,
+    clearSelectedFixtures,
     getCsrfToken,
     showToast,
     zoomCanvas,

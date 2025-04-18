@@ -12,6 +12,7 @@ import {
     selectedFixtures, 
     selectedPipe,
     setSelectedPipe,
+    clearSelectedFixtures,
     currentTool,
     SCALE_FACTOR,
     getCanvasPoint
@@ -225,12 +226,60 @@ function setupPipesLibrary() {
             
             // Make pipe draggable only if not locked
             if (!isLocked) {
+                // Store the initial position and time to distinguish between clicks and drags
+                let dragStartPos = { x: 0, y: 0 };
+                let dragStartTime = 0;
+                let isDragging = false;
+                
                 pipeElement.draggable()
-                    .on('dragstart', function() {
+                    .on('beforedrag', function(e) {
+                        // Only allow drag if in select mode or after selection
+                        if (currentTool !== 'select') {
+                            e.preventDefault();
+                            return false;
+                        }
+                        
+                        // Store initial position and time
+                        dragStartPos = { x: e.detail.event.clientX, y: e.detail.event.clientY };
+                        dragStartTime = Date.now();
+                        return true;
+                    })
+                    .on('dragstart', function(e) {
+                        // Mark as dragging
+                        isDragging = true;
                         this.addClass('dragging');
                     })
-                    .on('dragend', function() {
+                    .on('dragmove', function(e) {
+                        // Confirm this is a real drag, not just a click
+                        const dx = e.detail.event.clientX - dragStartPos.x;
+                        const dy = e.detail.event.clientY - dragStartPos.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        
+                        // If we've moved more than 5px, it's definitely a drag
+                        if (distance > 5) {
+                            isDragging = true;
+                        }
+                    })
+                    .on('dragend', function(e) {
                         this.removeClass('dragging');
+                        
+                        // Calculate total drag time and distance
+                        const dragTime = Date.now() - dragStartTime;
+                        const dx = e.detail.event.clientX - dragStartPos.x;
+                        const dy = e.detail.event.clientY - dragStartPos.y;
+                        const distance = Math.sqrt(dx*dx + dy*dy);
+                        
+                        // If this was just a quick tap or very small movement, treat it as a click, not a drag
+                        if (dragTime < 300 && distance < 5) {
+                            isDragging = false;
+                            
+                            // Restore original position
+                            if (dragStartPos.originalX !== undefined && dragStartPos.originalY !== undefined) {
+                                this.move(dragStartPos.originalX, dragStartPos.originalY);
+                            }
+                        }
+                        
+                        isDragging = false;
                     });
             }
             
@@ -250,12 +299,31 @@ function setupPipesLibrary() {
             return;
         }
         
-        pipeElement.click(function(event) {
+        // Use mousedown/mouseup instead of click for better control
+        let mouseDownTime = 0;
+        let mouseDownPos = { x: 0, y: 0 };
+        
+        pipeElement.node.addEventListener('mousedown', function(event) {
+            // Store mousedown position and time
+            mouseDownPos = { x: event.clientX, y: event.clientY };
+            mouseDownTime = Date.now();
+        });
+        
+        pipeElement.node.addEventListener('mouseup', function(event) {
             try {
-                // Prevent event bubbling
-                event.stopPropagation();
+                // Calculate if this was a click (short duration, small movement)
+                const moveTime = Date.now() - mouseDownTime;
+                const dx = event.clientX - mouseDownPos.x;
+                const dy = event.clientY - mouseDownPos.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
                 
-                if (currentTool === 'select') {
+                // Only consider it a click if it was a short duration and small movement
+                if (moveTime < 300 && distance < 5 && currentTool === 'select') {
+                    // This is a click, not a drag
+                    event.stopPropagation();
+                    
+                    console.log('Pipe clicked (not dragged)');
+                    
                     // Deselect previously selected items
                     if (selectedPipe && typeof selectedPipe.removeClass === 'function') {
                         selectedPipe.removeClass('selected');
@@ -266,7 +334,7 @@ function setupPipesLibrary() {
                             f.stroke({ width: 0 });
                         }
                     });
-                    selectedFixtures = [];
+                    clearSelectedFixtures(); // Use the exported function to clear array
                     
                     // Select this pipe - use the exported setSelectedPipe function
                     setSelectedPipe(pipeElement);
@@ -285,6 +353,19 @@ function setupPipesLibrary() {
                 }
             } catch (error) {
                 console.error('Error in pipe selection handler:', error);
+            }
+        });
+        
+        // Keep click handler as well for compatibility, but with the same checks
+        pipeElement.click(function(event) {
+            try {
+                // Only process clicks in select mode
+                if (currentTool === 'select') {
+                    // Let the mouseup handler do the work
+                    console.log('Pipe click event triggered');
+                }
+            } catch (error) {
+                console.error('Error in pipe click handler:', error);
             }
         });
         
@@ -445,6 +526,15 @@ function showPipeProperties(pipeElement) {
     // Show pipe properties panel
     propertiesPanel.style.display = 'block';
     
+    // Make sure properties tab is active
+    const propertiesTab = document.getElementById('properties-tab');
+    if (propertiesTab) {
+        // Activate the properties tab
+        const tabInstance = new bootstrap.Tab(propertiesTab);
+        tabInstance.show();
+        console.log('Activated properties tab');
+    }
+    
     // Populate properties form
     const nameInput = document.getElementById('pipe-name');
     const lengthInput = document.getElementById('pipe-length');
@@ -466,104 +556,316 @@ function showPipeProperties(pipeElement) {
     // Handle apply changes button
     const applyButton = document.getElementById('apply-pipe-properties');
     if (applyButton) {
-        // Remove existing event listeners
-        const newApplyButton = applyButton.cloneNode(true);
-        applyButton.parentNode.replaceChild(newApplyButton, applyButton);
+        console.log('Setting up apply button for pipe:', pipeElement.id());
         
-        // Add new event listener
-        newApplyButton.addEventListener('click', function() {
-            applyPipeProperties(pipeElement);
+        // First, directly set a data attribute to store the pipe ID
+        applyButton.setAttribute('data-pipe-id', pipeElement.id());
+        
+        // Clear any existing event listeners (safer approach)
+        applyButton.removeEventListener('click', applyButtonHandler);
+        
+        // Create a named handler function to improve debugging
+        function applyButtonHandler() {
+            console.log('Apply button clicked for pipe:', pipeElement.id());
+            const pipeId = this.getAttribute('data-pipe-id');
+            console.log('Target pipe ID from button attribute:', pipeId);
+            
+            // Get the pipe element directly from the pipes group
+            const targetPipe = SVG('#' + pipeId);
+            if (targetPipe) {
+                console.log('Found target pipe element');
+                applyPipeProperties(targetPipe);
+            } else {
+                console.error('Could not find pipe element with ID:', pipeId);
+                // Fallback to the original pipe element
+                applyPipeProperties(pipeElement);
+            }
+        }
+        
+        // Add the click event handler
+        applyButton.addEventListener('click', applyButtonHandler);
+        console.log('Apply button event handler attached');
+    } else {
+        console.error('Apply button not found in the DOM');
+    }
+    
+    // Add direct event listener to checkbox for immediate feedback
+    if (lockedCheckbox) {
+        lockedCheckbox.addEventListener('change', function() {
+            console.log('Lock checkbox changed:', this.checked);
         });
     }
 }
 
 // Apply pipe properties from the form to the pipe element
 function applyPipeProperties(pipeElement) {
-    if (!pipeElement) return;
-    
-    // Get form values
-    const nameInput = document.getElementById('pipe-name');
-    const lengthInput = document.getElementById('pipe-length');
-    const colorSelect = document.getElementById('pipe-color');
-    const lockedCheckbox = document.getElementById('pipe-locked');
-    
-    const newName = nameInput ? nameInput.value : '';
-    const newLength = lengthInput ? parseFloat(lengthInput.value) : 10;
-    const newColor = colorSelect ? colorSelect.value : '#666666';
-    const newLocked = lockedCheckbox ? lockedCheckbox.checked : false;
-    
-    // Update pipe attributes
-    pipeElement.attr({
-        'data-pipe-name': newName,
-        'data-pipe-length': newLength,
-        'data-pipe-color': newColor,
-        'data-locked': newLocked
-    });
-    
-    // Update pipe visuals
-    updatePipeVisuals(pipeElement, newLength, newColor);
-    
-    // Update pipe draggability based on locked status
-    if (newLocked) {
-        // Disable dragging
-        if (pipeElement.draggable) {
-            pipeElement.draggable(false);
-        }
-        
-        // Show locked state with green stroke
-        const pipeRect = pipeElement.findOne('rect');
-        if (pipeRect) {
-            pipeRect.stroke({ width: 2, color: '#009900' });
-        }
-    } else {
-        // Enable dragging
-        if (pipeElement.draggable) {
-            pipeElement.draggable(true);
-        }
-        
-        // If pipe is selected, show selection stroke, otherwise normal stroke
-        const pipeRect = pipeElement.findOne('rect');
-        if (pipeRect) {
-            if (pipeElement.hasClass('selected')) {
-                pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
-            } else {
-                pipeRect.stroke({ width: 1, color: '#000' });
-            }
-        }
+    if (!pipeElement) {
+        console.error('Cannot apply properties: pipe element is null');
+        return;
     }
     
-    console.log(`Updated pipe properties: Name=${newName}, Length=${newLength}, Color=${newColor}, Locked=${newLocked}`);
+    console.log('Applying properties to pipe:', pipeElement.id());
+    
+    try {
+        // Get form values
+        const nameInput = document.getElementById('pipe-name');
+        const lengthInput = document.getElementById('pipe-length');
+        const colorSelect = document.getElementById('pipe-color');
+        const lockedCheckbox = document.getElementById('pipe-locked');
+        
+        if (!nameInput || !lengthInput || !colorSelect || !lockedCheckbox) {
+            console.error('Property form inputs not found!');
+            return;
+        }
+        
+        console.log('Current form values:', {
+            name: nameInput.value,
+            length: lengthInput.value,
+            color: colorSelect.value,
+            locked: lockedCheckbox.checked
+        });
+        
+        const newName = nameInput.value || '';
+        const newLength = parseFloat(lengthInput.value) || 10;
+        const newColor = colorSelect.value || '#666666';
+        const newLocked = lockedCheckbox.checked;
+        
+        console.log('Updating pipe attributes to:', {
+            name: newName,
+            length: newLength,
+            color: newColor,
+            locked: newLocked
+        });
+        
+        // Update pipe attributes
+        pipeElement.attr({
+            'data-pipe-name': newName,
+            'data-pipe-length': newLength,
+            'data-pipe-color': newColor,
+            'data-locked': newLocked ? 'true' : 'false'  // Ensure boolean is converted to string
+        });
+        
+        // Get current pipe data after update
+        console.log('Pipe attributes after update:', {
+            name: pipeElement.attr('data-pipe-name'),
+            length: pipeElement.attr('data-pipe-length'),
+            color: pipeElement.attr('data-pipe-color'),
+            locked: pipeElement.attr('data-locked')
+        });
+        
+        // Update pipe visuals
+        console.log('Updating pipe visuals...');
+        updatePipeVisuals(pipeElement, newLength, newColor);
+        
+        // Check if SVG.js draggable plugin is available
+        if (typeof SVG !== 'undefined') {
+            console.log('SVG library is available');
+            
+            // Update pipe draggability based on locked status
+            if (newLocked) {
+                console.log('Locking pipe - disabling dragging');
+                // Disable dragging
+                try {
+                    // Get pipe by ID to ensure we have the latest reference
+                    const pipeById = SVG('#' + pipeElement.id());
+                    const pipeToUse = pipeById || pipeElement;
+                    
+                    console.log('Attempting to disable dragging on pipe:', pipeToUse.id());
+                    
+                    // Try multiple methods to disable dragging
+                    if (typeof pipeToUse.draggable === 'function') {
+                        pipeToUse.draggable(false);
+                        console.log('Disabled dragging via draggable(false)');
+                    } else if (pipeToUse.fixed) {
+                        pipeToUse.fixed();
+                        console.log('Disabled dragging via fixed()');
+                    } else if (pipeToUse.off) {
+                        // Try removing all drag-related event listeners
+                        pipeToUse.off('dragstart');
+                        pipeToUse.off('dragmove');
+                        pipeToUse.off('dragend');
+                        console.log('Removed drag event listeners');
+                    } else {
+                        console.error('No method available to disable dragging');
+                        
+                        // Last resort - try retrieving the element from DOM and manually setting draggable
+                        const domElement = document.getElementById(pipeElement.id());
+                        if (domElement) {
+                            domElement.setAttribute('draggable', 'false');
+                            console.log('Set draggable attribute on DOM element');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error disabling drag:', err);
+                }
+                
+                // Show locked state with green stroke
+                const pipeRect = pipeElement.findOne('rect');
+                if (pipeRect) {
+                    pipeRect.stroke({ width: 2, color: '#009900' });
+                    console.log('Applied green stroke to indicate locked state');
+                }
+            } else {
+                console.log('Unlocking pipe - enabling dragging');
+                // Enable dragging
+                try {
+                    // Get fresh reference to the pipe
+                    const pipeById = SVG('#' + pipeElement.id());
+                    const pipeToUse = pipeById || pipeElement;
+                    
+                    console.log('Attempting to enable dragging on pipe:', pipeToUse.id());
+                    
+                    // Try to enable dragging
+                    if (typeof pipeToUse.draggable === 'function') {
+                        pipeToUse.draggable(true);
+                        
+                        // Set up drag events again
+                        pipeToUse.on('dragstart', function() {
+                            this.addClass('dragging');
+                        });
+                        
+                        pipeToUse.on('dragend', function() {
+                            this.removeClass('dragging');
+                        });
+                        
+                        console.log('Enabled dragging via draggable(true) and set up event handlers');
+                    } else {
+                        console.error('No method available to enable dragging');
+                        
+                        // Try to recreate the draggable functionality
+                        try {
+                            // Try to apply draggable extension to the element
+                            if (SVG.extend && typeof pipeToUse.svg === 'function') {
+                                console.log('Trying to reapply draggable extension');
+                                pipeToUse.draggable();
+                            }
+                        } catch (extErr) {
+                            console.error('Error reapplying draggable extension:', extErr);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error enabling drag:', err);
+                }
+                
+                // If pipe is selected, show selection stroke, otherwise normal stroke
+                const pipeRect = pipeElement.findOne('rect');
+                if (pipeRect) {
+                    if (pipeElement.hasClass('selected')) {
+                        pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+                        console.log('Applied red dashed stroke to indicate selection');
+                    } else {
+                        pipeRect.stroke({ width: 1, color: '#000' });
+                        console.log('Applied normal stroke');
+                    }
+                }
+            }
+        } else {
+            console.error('SVG library is not available!');
+            // Show visual indicator even if SVG isn't available
+            const pipeRect = pipeElement.findOne('rect');
+            if (pipeRect) {
+                if (newLocked) {
+                    pipeRect.stroke({ width: 2, color: '#009900' });
+                } else if (pipeElement.hasClass('selected')) {
+                    pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
+                } else {
+                    pipeRect.stroke({ width: 1, color: '#000' });
+                }
+            }
+        }
+        
+        console.log(`Successfully updated pipe properties: Name=${newName}, Length=${newLength}, Color=${newColor}, Locked=${newLocked}`);
+        
+        // Show success message to user
+        const statusElement = document.getElementById('pipe-update-status');
+        if (statusElement) {
+            statusElement.textContent = `Updated pipe: Length=${newLength}m, ${newLocked ? 'Locked' : 'Unlocked'}`;
+            statusElement.style.display = 'block';
+            statusElement.className = 'mt-2 small text-success';
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Error applying pipe properties:', error);
+    }
 }
 
 // Update pipe visuals based on properties
 function updatePipeVisuals(pipeElement, newLength, newColor) {
-    if (!pipeElement) return;
+    if (!pipeElement) {
+        console.error('Cannot update visuals: pipe element is null');
+        return;
+    }
     
     try {
+        console.log(`Updating pipe visuals: Length=${newLength}m, Color=${newColor}`);
+        
         // Calculate dimensions based on length
         const pipeWidthPx = newLength * SCALE_FACTOR * 10; // 10px per meter
         const pipeHeightPx = pipeElement.attr('data-pipe-type') === 'truss' ? 15 : 8;
+        console.log(`New pipe dimensions: ${pipeWidthPx}px × ${pipeHeightPx}px`);
         
         // Get the rectangle element (first child of the group)
         const pipeRect = pipeElement.findOne('rect');
         if (pipeRect) {
+            console.log('Found pipe rectangle element');
+            
             // Get current stroke style
             const currentStroke = pipeRect.attr('stroke') || '#000';
             const currentStrokeWidth = pipeRect.attr('stroke-width') || 1;
             const currentDasharray = pipeRect.attr('stroke-dasharray') || '';
             
-            // Update size and color while preserving stroke
-            pipeRect.size(pipeWidthPx, pipeHeightPx).fill(newColor);
-            
-            // Restore stroke
-            pipeRect.stroke({
+            console.log('Current stroke style:', {
                 color: currentStroke,
                 width: currentStrokeWidth,
                 dasharray: currentDasharray
             });
             
+            // Update size and color while preserving stroke
+            console.log(`Resizing to ${pipeWidthPx}×${pipeHeightPx} and changing fill to ${newColor}`);
+            
+            try {
+                // Try a more direct approach to resize the rect
+                pipeRect.width(pipeWidthPx);
+                pipeRect.height(pipeHeightPx);
+                pipeRect.fill(newColor);
+                console.log('Resized using width/height methods');
+            } catch (sizeError) {
+                console.error('Error using width/height methods:', sizeError);
+                try {
+                    // Fallback to the size method
+                    pipeRect.size(pipeWidthPx, pipeHeightPx).fill(newColor);
+                    console.log('Resized using size method');
+                } catch (error) {
+                    console.error('Failed to resize pipe:', error);
+                }
+            }
+            
+            // Restore stroke
+            console.log('Restoring original stroke style');
+            try {
+                pipeRect.stroke({
+                    color: currentStroke,
+                    width: currentStrokeWidth,
+                    dasharray: currentDasharray
+                });
+            } catch (strokeError) {
+                console.error('Error restoring stroke:', strokeError);
+                // Try setting stroke properties individually
+                pipeRect.stroke({ color: currentStroke });
+                pipeRect.stroke({ width: currentStrokeWidth });
+                if (currentDasharray) {
+                    pipeRect.attr('stroke-dasharray', currentDasharray);
+                }
+            }
+            
             // Update truss pattern if it's a truss
-            if (pipeElement.attr('data-pipe-type') === 'truss') {
+            const pipeType = pipeElement.attr('data-pipe-type');
+            if (pipeType === 'truss') {
+                console.log('Applying truss pattern');
                 try {
                     // Add visual pattern for truss
                     const pattern = draw.pattern(20, pipeHeightPx, function(add) {
@@ -572,19 +874,27 @@ function updatePipeVisuals(pipeElement, newLength, newColor) {
                     });
                     
                     pipeRect.fill(pattern);
+                    console.log('Truss pattern applied successfully');
                 } catch (patternError) {
                     console.error('Error creating truss pattern:', patternError);
                     // Fallback to solid fill if pattern creation fails
                     pipeRect.fill(newColor);
                 }
             }
+        } else {
+            console.error('Pipe rectangle element not found!');
         }
         
         // Update label position
         const pipeLabel = pipeElement.findOne('text');
         if (pipeLabel) {
+            console.log('Updating label position');
             pipeLabel.center(pipeWidthPx / 2, pipeHeightPx / 2 - 15);
+        } else {
+            console.warn('Pipe label not found');
         }
+        
+        console.log('Pipe visuals updated successfully');
     } catch (error) {
         console.error('Error updating pipe visuals:', error);
     }

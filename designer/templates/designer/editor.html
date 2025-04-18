@@ -263,7 +263,7 @@
                 </div>
                 <div id="pipe-properties" style="display: none;">
                     <h6>Pipe/Truss Properties</h6>
-                    <form id="pipe-properties-form">
+                    <form id="pipe-properties-form" onsubmit="return false;">
                         <div class="mb-2">
                             <label class="form-label">Name</label>
                             <input type="text" class="form-control form-control-sm" id="pipe-name">
@@ -287,6 +287,7 @@
                             </div>
                         </div>
                         <button type="button" id="apply-pipe-properties" class="btn btn-sm btn-primary mt-2">Apply Changes</button>
+                        <div id="pipe-update-status" class="mt-2 small text-muted" style="display: none;"></div>
                     </form>
                 </div>
                 <div id="stage-properties">
@@ -336,6 +337,19 @@
         document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"><\/script>');
         document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"><\/script>');
     }
+    
+    // Configure SVG.js draggable settings
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof SVG === 'function' && SVG.Element && SVG.Element.prototype.draggable) {
+            // Configure global draggable settings to use a minimum drag distance
+            SVG.extend(SVG.Element, {
+                draggableMinDistance: 5, // Minimum pixels to move before considered a drag
+                draggableMinTime: 100    // Minimum milliseconds for drag
+            });
+            
+            console.log('SVG.js draggable settings configured');
+        }
+    });
 </script>
 <script src="{% static 'designer/js/modules/editor.js' %}?v={% now 'U' %}" type="module"></script>
 {% endblock %}

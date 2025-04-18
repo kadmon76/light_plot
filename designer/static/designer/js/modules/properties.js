@@ -8,7 +8,8 @@ import {
     gridGroup, 
     selectedFixtures, 
     selectedPipe,
-    setSelectedPipe 
+    setSelectedPipe,
+    clearSelectedFixtures
 } from './core.js';
 
 import { showFixtureProperties } from './fixtures.js';
@@ -55,8 +56,8 @@ function setupPropertyPanel() {
                     f.stroke({ width: 0 });
                 }
             });
-            // Clear the array without reassigning
-            selectedFixtures.length = 0;
+            // Clear the array using the helper function
+            clearSelectedFixtures();
             
             if (selectedPipe) {
                 // Clear selection styling
