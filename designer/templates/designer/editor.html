@@ -352,4 +352,26 @@
     });
 </script>
 <script src="{% static 'designer/js/modules/editor.js' %}?v={% now 'U' %}" type="module"></script>
+<!-- Test script for behavior system (simple, non-modular version) -->
+<script src="{% static 'designer/js/test-behavior-system.js' %}?v={% now 'U' %}"></script>
+
+<!-- Store SVG drawing globally for easier access -->
+<script>
+    // Make the SVG drawing accessible to test scripts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Attempt to find and expose the main SVG drawing after it's created
+        const checkForSVG = setInterval(function() {
+            if (typeof SVG === 'function' && document.querySelector('#canvas svg')) {
+                window.mainDraw = SVG('#canvas svg');
+                console.log('Stored SVG drawing in window.mainDraw');
+                clearInterval(checkForSVG);
+            }
+        }, 500);
+        
+        // Stop checking after 10 seconds
+        setTimeout(function() {
+            clearInterval(checkForSVG);
+        }, 10000);
+    });
+</script>
 {% endblock %}
