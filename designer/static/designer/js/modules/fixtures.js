@@ -162,10 +162,7 @@ function setupFixtureLibrary() {
         
         // Add to fixtures group
         fixturesGroup.add(fixtureElement);
-        
-        // Make the fixture selectable
-        makeFixtureSelectable(fixtureElement);
-        
+           
         // Add to user's inventory
         addToInventory(fixtureInstanceId, fixtureId, fixtureType);
         
@@ -175,8 +172,7 @@ function setupFixtureLibrary() {
         setActiveTool('select');
     }
     
-    // Make a fixture instance selectable and draggable
-    function makeFixtureSelectable(fixtureElement) {
+
         fixtureElement.click(function(event) {
             // Prevent event bubbling
             event.stopPropagation();
@@ -242,40 +238,6 @@ function setupFixtureLibrary() {
                 );
             });
         }
-    }
-    
-    // Function to lock/unlock a fixture in place
-    function toggleFixtureLock(fixtureElement) {
-        const currentLocked = fixtureElement.attr('data-locked') === 'true';
-        const newLocked = !currentLocked;
-        
-        // Update attribute
-        fixtureElement.attr('data-locked', newLocked);
-        
-        if (newLocked) {
-            // Disable dragging
-            fixtureElement.draggable(false);
-            // Visual indicator for locked state
-            fixtureElement.stroke({ width: 1, color: '#999999' });
-        } else {
-            // Enable dragging
-            fixtureElement.draggable(true);
-            // Update visual indicator
-            if (selectedFixtures.includes(fixtureElement)) {
-                fixtureElement.stroke({ width: 2, color: '#ff3300' });
-            } else {
-                fixtureElement.stroke({ width: 0 });
-            }
-        }
-        
-        // Update inventory
-        updateInventoryLockState(
-            fixtureElement.attr('data-fixture-instance-id'), 
-            newLocked
-        );
-        
-        console.log(`Fixture ${newLocked ? 'locked' : 'unlocked'}`);
-    }
     
     // Delete selected fixtures
     function deleteSelectedFixtures() {
@@ -631,9 +593,6 @@ function loadFixture(fixtureData) {
     
     // Add to fixtures group
     fixturesGroup.add(fixtureElement);
-    
-    // Make the fixture selectable
-    makeFixtureSelectable(fixtureElement);
     
     // Add to user's inventory
     addToInventory(instanceId, fixtureId, fixtureType);
