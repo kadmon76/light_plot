@@ -10,7 +10,7 @@
  * - Behavior management integration
  */
 
-import { draw } from '../../core.js';
+import { draw } from '../core.js';
 import { EventEmitter } from '../utils/event-emitter.js';
 
 /**

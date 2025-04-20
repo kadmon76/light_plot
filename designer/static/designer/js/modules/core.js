@@ -79,8 +79,6 @@ function initEditor() {
     
     // Setup event handlers and libraries
     setupToolHandlers();
-    setupFixtureLibrary();
-    setupPipesLibrary();
     setupPropertyPanel();
     
     console.log('Editor initialized');
@@ -306,9 +304,9 @@ export {
     drawGrid,
     drawDefaultStage,
     setupToolHandlers,
-    setupFixtureLibrary,
     setupPipesLibrary,
-    setupPropertyPanel
+    setupPropertyPanel,
+    libraryPanel
 };
 
 // Import module implementations
@@ -316,6 +314,6 @@ import { setupPaperSize } from './paper.js';
 import { drawGrid } from './grid.js';
 import { drawDefaultStage } from './stage.js';
 import { setupToolHandlers } from './tools.js';
-import { setupFixtureLibrary } from './fixtures.js';
 import { setupPipesLibrary } from './pipes.js';
 import { setupPropertyPanel } from './properties.js';
+import libraryPanel from './ui/library-panel.js';

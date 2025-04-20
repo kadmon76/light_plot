@@ -1,415 +1,21 @@
+// File: designer/static/designer/js/modules/fixtures.js
+// UPDATED VERSION - Remove redundant code now in library-panel.js
+
 /**
  * Light Plot Designer - Fixtures Module
  *
- * Handles fixture library, fixture placement and manipulation
+ * Handles fixture manipulation and fixture-specific operations
  */
 
-import { 
-    draw, 
+ import { 
     fixturesGroup, 
-    selectedFixtures, 
-    currentTool, 
-    setActiveTool,
-    getCanvasPoint,
+    selectedFixtures,
     showToast,
     clearSelectedFixtures
 } from './core.js';
 
 // Track user's fixture inventory
 let userFixtureInventory = [];
-
-// Set up fixture library interactions
-function setupFixtureLibrary() {
-    const fixtureItems = document.querySelectorAll('.fixture-item');
-    let selectedFixtureId = null;
-    let placementPreviewElement = null;
-    
-    fixtureItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const fixtureId = this.getAttribute('data-fixture-id');
-            
-            // Highlight the selected fixture in the list
-            fixtureItems.forEach(fi => fi.classList.remove('selected'));
-            this.classList.add('selected');
-            
-            selectedFixtureId = fixtureId;
-            
-            if (currentTool !== 'add-fixture') {
-                setActiveTool('add-fixture');
-            }
-            
-            console.log(`Selected fixture: ${fixtureId}`);
-        });
-    });
-    
-    // Set up canvas events for fixture placement
-    const canvas = document.getElementById('canvas');
-    
-    // Preview fixture position during mousemove
-    canvas.addEventListener('mousemove', function(event) {
-        if (currentTool === 'add-fixture' && selectedFixtureId) {
-            // Convert mouse position to SVG coordinates
-            const point = getCanvasPoint(event);
-            
-            // Create or update placement preview
-            showFixturePlacementPreview(selectedFixtureId, point.x, point.y);
-        }
-    });
-    
-    // Place fixture on click
-    canvas.addEventListener('click', function(event) {
-        if (currentTool === 'add-fixture' && selectedFixtureId) {
-            // Convert mouse position to SVG coordinates
-            const point = getCanvasPoint(event);
-            
-            // Place fixture at this position
-            placeFixture(selectedFixtureId, point.x, point.y);
-            
-            // Remove preview after placement
-            if (placementPreviewElement) {
-                placementPreviewElement.remove();
-                placementPreviewElement = null;
-            }
-        }
-    });
-    
-    // Set up keyboard deletion for fixtures
-    document.addEventListener('keydown', function(event) {
-        if ((event.key === 'Delete' || event.key === 'Backspace') && selectedFixtures.length > 0) {
-            deleteSelectedFixtures();
-        }
-    });
-    
-    // Add delete button to properties panel
-    const propertiesPanel = document.getElementById('fixture-properties');
-    if (propertiesPanel) {
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'btn btn-danger mt-3';
-        deleteButton.textContent = 'Delete Fixture';
-        deleteButton.id = 'delete-fixture-btn';
-        deleteButton.addEventListener('click', deleteSelectedFixtures);
-        
-        // Add after the properties form
-        const propertiesForm = document.getElementById('fixture-properties-form');
-        if (propertiesForm) {
-            propertiesForm.appendChild(deleteButton);
-        }
-    }
-    
-    // Show preview of fixture during placement
-    function showFixturePlacementPreview(fixtureId, x, y) {
-        // Remove existing preview
-        if (placementPreviewElement) {
-            placementPreviewElement.remove();
-        }
-        
-        // For now, we'll use a simple circle as a placeholder
-        // In a full implementation, this would use the actual fixture SVG
-        placementPreviewElement = draw.circle(30)
-            .fill('rgba(0, 150, 255, 0.5)')
-            .stroke({ width: 1, color: '#0066cc', dasharray: '5,5' })
-            .center(x, y)
-            .attr('data-fixture-id', fixtureId);
-            
-        // Add a label with fixture type
-        const fixtureType = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`).textContent.trim();
-        draw.text(fixtureType)
-            .font({ size: 10, family: 'Arial' })
-            .center(x, y + 25)
-            .addTo(placementPreviewElement);
-    }
-    
-    // Actually place a fixture on the plot
-    function placeFixture(fixtureId, x, y) {
-        // Create a unique ID for this fixture instance
-        const fixtureInstanceId = `fixture-${Date.now()}`;
-        
-        // For now, we'll use a simple circle
-        // In a full implementation, this would use the SVG from the fixture model
-        const fixtureElement = draw.group().id(fixtureInstanceId);
-        fixtureElement.circle(30)
-            .fill('#0066cc')
-            .center(0, 0);
-            
-        // Add fixture number/channel
-        fixtureElement.circle(16)
-            .fill('white')
-            .center(0, 0);
-            
-        fixtureElement.text("1")
-            .font({ size: 12, family: 'Arial', weight: 'bold', anchor: 'middle' })
-            .center(0, 0);
-            
-        // Position the fixture
-        fixtureElement.center(x, y);
-        
-        // Get fixture type for inventory tracking
-        const fixtureType = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`).textContent.trim();
-        
-        // Store fixture data
-        fixtureElement.attr({
-            'data-fixture-id': fixtureId,
-            'data-fixture-instance-id': fixtureInstanceId,
-            'data-fixture-type': fixtureType,
-            'data-channel': 1, // Default channel
-            'data-purpose': '',
-            'data-color': '',
-            'data-notes': '',
-            'data-dimmer': '',
-            'data-rotation': 0,
-            'data-locked': false
-        });
-        
-        // Add to fixtures group
-        fixturesGroup.add(fixtureElement);
-           
-        // Add to user's inventory
-        addToInventory(fixtureInstanceId, fixtureId, fixtureType);
-        
-        console.log(`Placed fixture ${fixtureId} at position ${x},${y}`);
-        
-        // After placing, switch back to select tool
-        setActiveTool('select');
-    }
-    
-
-        fixtureElement.click(function(event) {
-            // Prevent event bubbling
-            event.stopPropagation();
-            
-            if (currentTool === 'select') {
-                // Check if we're holding shift for multi-select
-                if (event.shiftKey) {
-                    // Add to selection without deselecting others
-                    if (!selectedFixtures.includes(fixtureElement)) {
-                        selectedFixtures.push(fixtureElement);
-                        fixtureElement.stroke({ width: 2, color: '#ff3300' });
-                    }
-                } else {
-                    // Deselect previously selected fixtures
-                    selectedFixtures.forEach(f => {
-                        f.stroke({ width: 0 });
-                    });
-                    
-                    // Select this fixture
-                    clearSelectedFixtures();
-                    selectedFixtures.push(fixtureElement);
-                    fixtureElement.stroke({ width: 2, color: '#ff3300' });
-                    
-                    // Show properties
-                    showFixtureProperties(fixtureElement);
-                }
-            }
-        });
-        
-        // Double click to edit rotation
-        fixtureElement.dblclick(function(event) {
-            event.stopPropagation();
-            
-            if (currentTool === 'select') {
-                // Toggle rotation - rotate by 45 degrees
-                const currentRotation = parseInt(fixtureElement.attr('data-rotation') || 0);
-                const newRotation = (currentRotation + 45) % 360;
-                
-                // Apply rotation
-                fixtureElement.rotate(newRotation);
-                fixtureElement.attr('data-rotation', newRotation);
-                
-                console.log(`Fixture rotated to ${newRotation} degrees`);
-            }
-        });
-        
-        // Check if draggable needs to be disabled (for locked fixtures)
-        const isLocked = fixtureElement.attr('data-locked') === 'true';
-        if (!isLocked) {
-            // Make draggable
-            fixtureElement.draggable();
-            
-            // Update properties when dragged
-            fixtureElement.on('dragend', function() {
-                // Update position in plot data
-                console.log(`Fixture moved to ${fixtureElement.cx()},${fixtureElement.cy()}`);
-                
-                // Update inventory position
-                updateInventoryPosition(
-                    fixtureElement.attr('data-fixture-instance-id'), 
-                    fixtureElement.cx(), 
-                    fixtureElement.cy()
-                );
-            });
-        }
-    
-    // Delete selected fixtures
-    function deleteSelectedFixtures() {
-        if (selectedFixtures.length === 0) return;
-        
-        selectedFixtures.forEach(fixture => {
-            const instanceId = fixture.attr('data-fixture-instance-id');
-            
-            // Remove from inventory
-            removeFromInventory(instanceId);
-            
-            // Remove from canvas
-            fixture.remove();
-        });
-        
-        // Clear selection
-        clearSelectedFixtures();
-        
-        // Hide properties panel
-        const propertiesPanel = document.getElementById('fixture-properties');
-        if (propertiesPanel) {
-            propertiesPanel.style.display = 'none';
-        }
-        
-        showToast('Fixtures Deleted', `${selectedFixtures.length} fixture(s) removed`);
-        
-        console.log('Fixtures deleted');
-    }
-}
-
-// Inventory functions
-
-// Add a fixture to user's inventory
-function addToInventory(instanceId, fixtureId, fixtureType) {
-    userFixtureInventory.push({
-        instanceId: instanceId,
-        fixtureId: fixtureId,
-        fixtureType: fixtureType,
-        position: { x: 0, y: 0 },
-        rotation: 0,
-        locked: false,
-        properties: {
-            channel: 1,
-            dimmer: '',
-            color: '',
-            purpose: '',
-            notes: ''
-        }
-    });
-    
-    // Update inventory display
-    updateInventoryDisplay();
-}
-
-// Remove a fixture from inventory
-function removeFromInventory(instanceId) {
-    userFixtureInventory = userFixtureInventory.filter(item => item.instanceId !== instanceId);
-    
-    // Update inventory display
-    updateInventoryDisplay();
-}
-
-// Update a fixture's position in inventory
-function updateInventoryPosition(instanceId, x, y) {
-    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
-    if (fixture) {
-        fixture.position = { x, y };
-    }
-}
-
-// Update a fixture's rotation in inventory
-function updateInventoryRotation(instanceId, rotation) {
-    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
-    if (fixture) {
-        fixture.rotation = rotation;
-    }
-}
-
-// Update a fixture's lock state in inventory
-function updateInventoryLockState(instanceId, locked) {
-    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
-    if (fixture) {
-        fixture.locked = locked;
-    }
-}
-
-// Update a fixture's properties in inventory
-function updateInventoryProperties(instanceId, properties) {
-    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
-    if (fixture) {
-        fixture.properties = { ...fixture.properties, ...properties };
-    }
-}
-
-// Update inventory display in UI
-function updateInventoryDisplay() {
-    const inventoryContainer = document.getElementById('user-inventory');
-    if (!inventoryContainer) {
-        // Create inventory container if it doesn't exist
-        createInventoryPanel();
-        return;
-    }
-    
-    // Clear current inventory
-    inventoryContainer.innerHTML = '';
-    
-    // Group fixtures by type for a better organized display
-    const fixturesByType = {};
-    userFixtureInventory.forEach(fixture => {
-        if (!fixturesByType[fixture.fixtureType]) {
-            fixturesByType[fixture.fixtureType] = [];
-        }
-        fixturesByType[fixture.fixtureType].push(fixture);
-    });
-    
-    // Create inventory items
-    for (const [type, fixtures] of Object.entries(fixturesByType)) {
-        // Add type header
-        const typeHeader = document.createElement('div');
-        typeHeader.className = 'inventory-type-header';
-        typeHeader.textContent = `${type} (${fixtures.length})`;
-        inventoryContainer.appendChild(typeHeader);
-        
-        // Add fixtures of this type
-        fixtures.forEach(fixture => {
-            const fixtureItem = document.createElement('div');
-            fixtureItem.className = 'inventory-item';
-            fixtureItem.dataset.instanceId = fixture.instanceId;
-            
-            // Basic info
-            fixtureItem.innerHTML = `
-                <div class="inventory-item-preview"></div>
-                <div class="inventory-item-info">
-                    <span>Channel: ${fixture.properties.channel}</span>
-                    <span>${fixture.locked ? '🔒' : ''}</span>
-                </div>
-            `;
-            
-            // Add click handler to select this fixture on the canvas
-            fixtureItem.addEventListener('click', () => {
-                const fixtureElement = SVG.find(`#${fixture.instanceId}`)[0];
-                if (fixtureElement) {
-                    // Trigger the click event on the fixture
-                    fixtureElement.fire('click');
-                }
-            });
-            
-            inventoryContainer.appendChild(fixtureItem);
-        });
-    }
-}
-
-// Create inventory panel if it doesn't exist
-function createInventoryPanel() {
-    const sidebarRight = document.querySelector('.sidebar-right');
-    if (!sidebarRight) return;
-    
-    // Create inventory section
-    const inventorySection = document.createElement('div');
-    inventorySection.className = 'card mb-3';
-    inventorySection.innerHTML = `
-        <div class="card-header">
-            <h5 class="mb-0">Your Fixture Inventory</h5>
-        </div>
-        <div class="card-body" id="user-inventory">
-            <p class="text-muted small">No fixtures added yet.</p>
-        </div>
-    `;
-    
-    // Add to sidebar
-    sidebarRight.appendChild(inventorySection);
-}
 
 // Show fixture properties in the properties panel
 function showFixtureProperties(fixtureElement) {
@@ -602,9 +208,158 @@ function loadFixture(fixtureData) {
     return fixtureElement;
 }
 
+// Inventory functions
+
+// Add a fixture to user's inventory
+function addToInventory(instanceId, fixtureId, fixtureType) {
+    userFixtureInventory.push({
+        instanceId: instanceId,
+        fixtureId: fixtureId,
+        fixtureType: fixtureType,
+        position: { x: 0, y: 0 },
+        rotation: 0,
+        locked: false,
+        properties: {
+            channel: 1,
+            dimmer: '',
+            color: '',
+            purpose: '',
+            notes: ''
+        }
+    });
+    
+    // Update inventory display
+    updateInventoryDisplay();
+}
+
+// Remove a fixture from inventory
+function removeFromInventory(instanceId) {
+    userFixtureInventory = userFixtureInventory.filter(item => item.instanceId !== instanceId);
+    
+    // Update inventory display
+    updateInventoryDisplay();
+}
+
+// Update a fixture's position in inventory
+function updateInventoryPosition(instanceId, x, y) {
+    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
+    if (fixture) {
+        fixture.position = { x, y };
+    }
+}
+
+// Update a fixture's rotation in inventory
+function updateInventoryRotation(instanceId, rotation) {
+    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
+    if (fixture) {
+        fixture.rotation = rotation;
+    }
+}
+
+// Update a fixture's lock state in inventory
+function updateInventoryLockState(instanceId, locked) {
+    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
+    if (fixture) {
+        fixture.locked = locked;
+    }
+}
+
+// Update a fixture's properties in inventory
+function updateInventoryProperties(instanceId, properties) {
+    const fixture = userFixtureInventory.find(item => item.instanceId === instanceId);
+    if (fixture) {
+        fixture.properties = { ...fixture.properties, ...properties };
+    }
+}
+
+// Update inventory display in UI
+function updateInventoryDisplay() {
+    const inventoryContainer = document.getElementById('user-inventory');
+    if (!inventoryContainer) {
+        // Create inventory container if it doesn't exist
+        createInventoryPanel();
+        return;
+    }
+    
+    // Clear current inventory
+    inventoryContainer.innerHTML = '';
+    
+    // Group fixtures by type for a better organized display
+    const fixturesByType = {};
+    userFixtureInventory.forEach(fixture => {
+        if (!fixturesByType[fixture.fixtureType]) {
+            fixturesByType[fixture.fixtureType] = [];
+        }
+        fixturesByType[fixture.fixtureType].push(fixture);
+    });
+    
+    // Create inventory items
+    for (const [type, fixtures] of Object.entries(fixturesByType)) {
+        // Add type header
+        const typeHeader = document.createElement('div');
+        typeHeader.className = 'inventory-type-header';
+        typeHeader.textContent = `${type} (${fixtures.length})`;
+        inventoryContainer.appendChild(typeHeader);
+        
+        // Add fixtures of this type
+        fixtures.forEach(fixture => {
+            const fixtureItem = document.createElement('div');
+            fixtureItem.className = 'inventory-item';
+            fixtureItem.dataset.instanceId = fixture.instanceId;
+            
+            // Basic info
+            fixtureItem.innerHTML = `
+                <div class="inventory-item-preview"></div>
+                <div class="inventory-item-info">
+                    <span>Channel: ${fixture.properties.channel}</span>
+                    <span>${fixture.locked ? '🔒' : ''}</span>
+                </div>
+            `;
+            
+            // Add click handler to select this fixture on the canvas
+            fixtureItem.addEventListener('click', () => {
+                const fixtureElement = SVG.find(`#${fixture.instanceId}`)[0];
+                if (fixtureElement) {
+                    // Trigger the click event on the fixture
+                    fixtureElement.fire('click');
+                }
+            });
+            
+            inventoryContainer.appendChild(fixtureItem);
+        });
+    }
+}
+
+// Create inventory panel if it doesn't exist
+function createInventoryPanel() {
+    const sidebarRight = document.querySelector('.sidebar-right');
+    if (!sidebarRight) return;
+    
+    // Create inventory section
+    const inventorySection = document.createElement('div');
+    inventorySection.className = 'card mb-3';
+    inventorySection.innerHTML = `
+        <div class="card-header">
+            <h5 class="mb-0">Your Fixture Inventory</h5>
+        </div>
+        <div class="card-body" id="user-inventory">
+            <p class="text-muted small">No fixtures added yet.</p>
+        </div>
+    `;
+    
+    // Add to sidebar
+    sidebarRight.appendChild(inventorySection);
+}
+
+// Export functions and data
 export { 
-    setupFixtureLibrary, 
     showFixtureProperties,
     loadFixture,
-    userFixtureInventory
+    userFixtureInventory,
+    addToInventory,
+    removeFromInventory,
+    updateInventoryPosition,
+    updateInventoryRotation,
+    updateInventoryLockState,
+    updateInventoryProperties
 };

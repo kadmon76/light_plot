@@ -6,7 +6,7 @@
  */
 
  import BaseBehavior from './behavior.js';
- import { getCanvasPoint } from '../../../core.js';
+ import { getCanvasPoint } from '../../core.js';
  
  /**
   * RotatableBehavior class
