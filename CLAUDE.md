@@ -33,53 +33,26 @@ The frontend JavaScript follows a behavior-based architecture:
 - **Command Pattern**: Used for undoable operations
 - **Event System**: For loose coupling between components
 
-# Code Cleanup Priorities
+## Implementation Progress
 
-## Architectural Transition
-The project is transitioning from an imperative, function-based approach to a modular, behavior-based architecture. During this transition, it's critical to:
+### Completed Work
+1. Analyzed the DRY principles in element creation
+2. Refactored `ElementFactory` to centralize common functionality:
+   - Created `_createElement` method for shared element creation logic
+   - Simplified `createFixture`, `createPipe`, `loadFixture`, and `loadPipe` methods
+   - Standardized position, rotation, and locking behavior in one place
 
-1. **Remove redundant code** - Identify and eliminate old-style implementations once the behavior-based version is working
-2. **Maintain clean interfaces** - Ensure API consistency between modules
-3. **Delete deprecated functions** - Don't leave "dead code" in the codebase
+### Next Steps
+1. Clean up redundant code in `fixtures.js` and `pipes.js`
+2. Update these files to use the `ElementFactory` instead of their own implementations
+3. Migrate remaining functionality to appropriate classes (element-specific functionality to element classes)
+4. Ensure UI code properly connects to the new system
 
-## Code Style Guidelines
-- **Formatting**: Follow PEP 8 style guide for Python code
-- **Imports**: Group imports: 1) Python standard library 2) Django modules 3) Third-party packages 4) Local modules
-- **Naming**: snake_case for variables/functions, PascalCase for classes
-- **Django Models**: Fields first, then Meta class, then methods
-- **Error Handling**: Use try/except blocks; log errors with context; never suppress errors
-- **Templates**: Use Django template inheritance with base.html
-- **File Structure**: Modular organization - models/ for model modules
-- **JavaScript**: Use ES6 modules with proper imports/exports
-- **Doc String**: Use descriptive docstrings for all functions and classes
+### Specific Focus for Next Chat
+For the next chat, focus ONLY on refactoring `fixtures.js` to:
+1. Remove redundant code that duplicates `ElementFactory` functionality
+2. Replace direct element creation with calls to `ElementFactory` methods
+3. Move any fixture-specific behavior to the `FixtureElement` class
+4. Update UI code to use the factory and element classes
 
-## JavaScript Organization
-- All JavaScript is organized into ES6 modules
-- Follows DRY principle with reusable components
-- Core directory structure:
-  - `/modules/elements/` - Base element and registry
-  - `/modules/elements/behaviors/` - Reusable behaviors
-  - `/modules/elements/commands/` - Undoable operations
-  - `/modules/types/` - Element implementations
-  - `/modules/ui/` - UI components
-- Use proper import/export syntax for module dependencies
-- Handle errors gracefully in try/catch blocks
-- Use consistent naming conventions for functions and variables
-- Implement proper event cleanup to prevent memory leaks
-
-## Implementation Sequence
-When implementing the behavior system, follow this sequence:
-1. Base element infrastructure (BaseElement, ElementRegistry)
-2. Core behaviors (Selectable, Draggable, Lockable, Rotatable)
-3. Element type implementations (fixtures, pipes)
-4. UI connections (property panel, tools)
-
-## Code Quality Guidelines
-- Each module should have a single, clear responsibility
-- Behaviors should be fully encapsulated with no leaky abstractions
-- Minimize dependencies between modules
-- Properly clean up resources (event listeners, etc.)
-- Comment complex code, especially behavior interactions
-
-## Testing
-The test-behavior-system.js file demonstrates working implementations of dragging, selecting, locking, and rotation. New implementations should maintain all this functionality but in the cleaner, modular architecture.
+No need to implement new functionality - just clean up existing code while maintaining all current features.

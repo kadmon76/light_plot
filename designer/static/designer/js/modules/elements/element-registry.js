@@ -1,196 +1,187 @@
 /**
- * Element Registry Module
+ * Element Factory Module
  * 
- * Manages element registration, retrieval, and type definitions.
- * Central registry for accessing all elements in the scene.
+ * Factory for creating different element types.
+ * Centralizes element creation logic and integrates with the element registry.
  */
 
-import { EventEmitter } from '../../utils/event-emitter.js';
-
-/**
- * ElementRegistry class
- * Manages all elements in the scene
- */
-export class ElementRegistry extends EventEmitter {
-    constructor() {
-        super();
-        
-        // Map of elements by ID
-        this._elements = new Map();
-        
-        // Map of element types and their factory functions
-        this._elementTypes = new Map();
-    }
-    
-    /**
-     * Register an element type with a factory function
-     * @param {String} type - Element type name
-     * @param {Function} factory - Factory function that creates element instances
-     * @return {ElementRegistry} this
-     */
-    registerType(type, factory) {
-        if (!type || typeof factory !== 'function') return this;
-        
-        this._elementTypes.set(type, factory);
-        this.emit('type:registered', { type });
-        
-        return this;
-    }
-    
-    /**
-     * Check if an element type is registered
-     * @param {String} type - Element type name
-     * @return {Boolean} Whether the type is registered
-     */
-    hasType(type) {
-        return this._elementTypes.has(type);
-    }
-    
-    /**
-     * Create an element of a specific type
-     * @param {String} type - Element type name
-     * @param {Object} options - Options for the element
-     * @return {BaseElement|null} Element instance or null if type not found
-     */
-    createElement(type, options = {}) {
-        const factory = this._elementTypes.get(type);
-        if (!factory) return null;
-        
-        const element = factory(options);
-        
-        // Auto-register if ID is provided
-        if (element && element.id && options.autoRegister !== false) {
-            this.register(element);
-        }
-        
-        return element;
-    }
-    
-    /**
-     * Register an element in the registry
-     * @param {BaseElement} element - Element to register
-     * @return {ElementRegistry} this
-     */
-    register(element) {
-        if (!element || !element.id) return this;
-        
-        const id = element.id();
-        
-        // If already registered, unregister first
-        if (this._elements.has(id)) {
-            this.unregister(id);
-        }
-        
-        this._elements.set(id, element);
-        this.emit('element:registered', { element });
-        
-        return this;
-    }
-    
-    /**
-     * Unregister an element from the registry
-     * @param {String|BaseElement} elementOrId - Element or element ID to unregister
-     * @return {BaseElement|null} Unregistered element or null
-     */
-    unregister(elementOrId) {
-        const id = typeof elementOrId === 'string' ? elementOrId : 
-                  (elementOrId && elementOrId.id ? elementOrId.id() : null);
-        
-        if (!id || !this._elements.has(id)) return null;
-        
-        const element = this._elements.get(id);
-        this._elements.delete(id);
-        
-        this.emit('element:unregistered', { element });
-        
-        return element;
-    }
-    
-    /**
-     * Get an element by ID
-     * @param {String} id - Element ID
-     * @return {BaseElement|null} Element instance or null if not found
-     */
-    get(id) {
-        return this._elements.get(id) || null;
-    }
-    
-    /**
-     * Check if an element is registered
-     * @param {String} id - Element ID
-     * @return {Boolean} Whether the element is registered
-     */
-    has(id) {
-        return this._elements.has(id);
-    }
-    
-    /**
-     * Get all registered elements
-     * @return {Array<BaseElement>} Array of all registered elements
-     */
-    getAll() {
-        return Array.from(this._elements.values());
-    }
-    
-    /**
-     * Get all elements of a specific type
-     * @param {String} type - Element type to filter by
-     * @return {Array<BaseElement>} Array of matching elements
-     */
-    getByType(type) {
-        if (!type) return [];
-        
-        return this.getAll().filter(element => element.type() === type);
-    }
-    
-    /**
-     * Get all selected elements
-     * @return {Array<BaseElement>} Array of selected elements
-     */
-    getSelected() {
-        return this.getAll().filter(element => element.isSelected());
-    }
-    
-    /**
-     * Get count of registered elements
-     * @return {Number} Count of registered elements
-     */
-    count() {
-        return this._elements.size;
-    }
-    
-    /**
-     * Clear all elements from the registry
-     * @param {Boolean} [removeFromScene=false] - Whether to also remove elements from scene
-     * @return {ElementRegistry} this
-     */
-    clear(removeFromScene = false) {
-        if (removeFromScene) {
-            this._elements.forEach(element => {
-                if (element.remove && typeof element.remove === 'function') {
-                    element.remove();
-                }
-            });
-        }
-        
-        this._elements.clear();
-        this.emit('registry:cleared');
-        
-        return this;
-    }
-    
-    /**
-     * Get singleton instance
-     * @return {ElementRegistry} Singleton instance
-     */
-    static getInstance() {
-        if (!ElementRegistry._instance) {
-            ElementRegistry._instance = new ElementRegistry();
-        }
-        return ElementRegistry._instance;
-    }
-}
-
-// Create and export singleton instance
-const elementRegistry = ElementRegistry.getInstance();
-export default elementRegistry;
+ import { FixtureElement } from './fixture-element.js';
+ import { PipeElement } from './pipe-element.js';
+ import elementRegistry from '../elements/element-registry.js';
+ 
+ /**
+  * ElementFactory class
+  * Creates and registers plot elements
+  */
+ export class ElementFactory {
+     constructor() {
+         // Register element types with the registry
+         this._registerElementTypes();
+     }
+     
+     /**
+      * Register element types with the element registry
+      * @private
+      */
+     _registerElementTypes() {
+         // Register fixture element factory
+         elementRegistry.registerType('fixture', (options) => {
+             return new FixtureElement(options);
+         });
+         
+         // Register pipe element factory
+         elementRegistry.registerType('pipe', (options) => {
+             return new PipeElement(options);
+         });
+     }
+     
+     /**
+      * Create or load any element type with common handling
+      * @param {String} type - Element type ('fixture', 'pipe', etc.)
+      * @param {String} id - Element ID
+      * @param {Object} properties - Element properties
+      * @param {Number} x - X position
+      * @param {Number} y - Y position
+      * @param {Object} [options={}] - Additional options
+      * @return {BaseElement} The created element
+      * @private
+      */
+     _createElement(type, id, properties, x, y, options = {}) {
+         // Create element via the registry
+         const element = elementRegistry.createElement(type, {
+             id: id,
+             properties: properties,
+             ...options
+         });
+         
+         // Position element
+         if (x !== undefined && y !== undefined) {
+             element.move(x, y);
+         }
+         
+         // Apply rotation if specified
+         if (properties.rotation) {
+             element.rotate(properties.rotation);
+         }
+         
+         // Apply locked state if specified
+         if (options.locked) {
+             element.lock(true);
+         }
+         
+         return element;
+     }
+     
+     /**
+      * Create a fixture element
+      * @param {String} fixtureId - Fixture type ID
+      * @param {Number} x - X position
+      * @param {Number} y - Y position
+      * @param {Object} [properties={}] - Additional fixture properties
+      * @return {FixtureElement} The created fixture
+      */
+     createFixture(fixtureId, x, y, properties = {}) {
+         // Get fixture type from the DOM
+         const fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`);
+         const fixtureType = fixtureItem ? fixtureItem.textContent.trim() : 'Unknown Fixture';
+         
+         // Generate a unique instance ID
+         const instanceId = `fixture-${Date.now()}`;
+         
+         // Create element with standard properties
+         return this._createElement('fixture', instanceId, {
+             fixtureId: fixtureId,
+             fixtureType: fixtureType,
+             channel: properties.channel || '1',
+             dimmer: properties.dimmer || '',
+             color: properties.color || '#0066cc',
+             purpose: properties.purpose || '',
+             notes: properties.notes || '',
+             rotation: properties.rotation || 0,
+             ...properties
+         }, x, y);
+     }
+     
+     /**
+      * Create a pipe element
+      * @param {Object} pipeConfig - Pipe configuration
+      * @param {Number} x - X position
+      * @param {Number} y - Y position
+      * @return {PipeElement} The created pipe
+      */
+     createPipe(pipeConfig, x, y) {
+         // Generate a unique instance ID
+         const instanceId = pipeConfig.pipeId || `pipe-${Date.now()}`;
+         
+         // Create pipe with standard properties
+         return this._createElement('pipe', instanceId, {
+             pipeName: pipeConfig.pipeName,
+             pipeType: pipeConfig.pipeType,
+             pipeLength: pipeConfig.pipeLength,
+             originalLength: pipeConfig.pipeLength,
+             pipeColor: pipeConfig.pipeColor,
+             rotation: pipeConfig.rotation || 0
+         }, x, y);
+     }
+     
+     /**
+      * Load a fixture from saved data
+      * @param {Object} fixtureData - Serialized fixture data
+      * @return {FixtureElement} The loaded fixture
+      */
+     loadFixture(fixtureData) {
+         return this._createElement('fixture', 
+             fixtureData.instance_id || `fixture-${Date.now()}`,
+             {
+                 fixtureId: fixtureData.fixture_id,
+                 fixtureType: fixtureData.fixture_type,
+                 channel: fixtureData.channel || '1',
+                 dimmer: fixtureData.dimmer || '',
+                 color: fixtureData.color || '#0066cc',
+                 purpose: fixtureData.purpose || '',
+                 notes: fixtureData.notes || '',
+                 rotation: fixtureData.rotation || 0
+             },
+             fixtureData.x, 
+             fixtureData.y,
+             { locked: fixtureData.locked }
+         );
+     }
+     
+     /**
+      * Load a pipe from saved data
+      * @param {Object} pipeData - Serialized pipe data
+      * @return {PipeElement} The loaded pipe
+      */
+     loadPipe(pipeData) {
+         return this._createElement('pipe',
+             pipeData.pipe_id || `pipe-${Date.now()}`,
+             {
+                 pipeName: pipeData.pipe_name,
+                 pipeType: pipeData.pipe_type,
+                 pipeLength: pipeData.pipe_length,
+                 originalLength: pipeData.pipe_original_length || pipeData.pipe_length,
+                 pipeColor: pipeData.pipe_color,
+                 rotation: pipeData.rotation || 0
+             },
+             pipeData.x,
+             pipeData.y,
+             { locked: pipeData.locked }
+         );
+     }
+     
+     /**
+      * Get singleton instance
+      * @return {ElementFactory} Singleton instance
+      */
+     static getInstance() {
+         if (!ElementFactory._instance) {
+             ElementFactory._instance = new ElementFactory();
+         }
+         return ElementFactory._instance;
+     }
+ }
+ 
+ // Create and export singleton instance
+ const elementFactory = ElementFactory.getInstance();
+ export default elementFactory;
