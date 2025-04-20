@@ -9,7 +9,7 @@ from rest_framework.response import Response
 import logging
 
 from .presenters import get_registry
-
+from .models import LightFixture
 # Set up logging
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,8 @@ def plot_editor(request, plot_id=None):
         # Get plot presenter from registry
         plot_presenter = presenter_registry.get_plot_presenter()
         
+        # Fetch all light fixtures
+        fixtures = LightFixture.objects.all()
         # Use presenter to get context data
         context = plot_presenter.get_editor_context(plot_id, request.user)
         
