@@ -282,124 +282,13 @@ function setupPipesLibrary() {
                         isDragging = false;
                     });
             }
-            
-            // Make pipe selectable
-            makePipeSelectable(pipeElement);
-            
+               
             console.log(`Placed pipe ${pipeId} on canvas`);
         } catch (error) {
             console.error('Error placing pipe on canvas:', error);
         }
     }
-    
-// Make a pipe selectable
-function makePipeSelectable(pipeElement) {
-    if (!pipeElement || typeof pipeElement.click !== 'function') {
-        console.error('Invalid pipe element provided to makePipeSelectable');
-        return;
-    }
-    
-    // Set up draggable behavior with proper event handling
-    const isLocked = pipeElement.attr('data-locked') === 'true';
-    
-    if (!isLocked) {
-        pipeElement.draggable()
-            .on('dragstart', function(e) {
-                // Prevent event from reaching the canvas
-                e.stopPropagation();
-                this.addClass('dragging');
-                console.log('Pipe drag started');
-            })
-            .on('dragend', function(e) {
-                // Clean up after drag ends
-                this.removeClass('dragging');
-                console.log('Pipe drag ended');
-                
-                // Redraw with the final position
-                const x = this.x();
-                const y = this.y();
-                console.log(`Pipe final position: ${x}, ${y}`);
-            });
-    }
-    
-    // Handle selection behavior separately from dragging
-    pipeElement.click(function(event) {
-        // Only handle selection when in select mode
-        if (currentTool === 'select') {
-            event.stopPropagation();
-            
-            console.log('Pipe clicked for selection');
-            
-            // Deselect previously selected items
-            if (selectedPipe && typeof selectedPipe.removeClass === 'function') {
-                selectedPipe.removeClass('selected');
-                
-                // Reset stroke unless the pipe is locked
-                const prevPipeRect = selectedPipe.findOne('rect');
-                const prevPipeLocked = selectedPipe.attr('data-locked') === 'true';
-                
-                if (prevPipeRect) {
-                    if (prevPipeLocked) {
-                        // Keep green stroke for locked pipes
-                        prevPipeRect.stroke({ width: 2, color: '#009900' });
-                    } else {
-                        // Reset to default stroke
-                        prevPipeRect.stroke({ width: 1, color: '#000' });
-                    }
-                }
-            }
-            
-            selectedFixtures.forEach(f => {
-                if (f && typeof f.stroke === 'function') {
-                    f.stroke({ width: 0 });
-                }
-            });
-            clearSelectedFixtures();
-            
-            // Select this pipe
-            setSelectedPipe(pipeElement);
-            pipeElement.addClass('selected');
-            
-            // Ensure the selection is visible with outline
-            const pipeRect = pipeElement.findOne('rect');
-            if (pipeRect) {
-                pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
-            }
-            
-            // Show pipe properties panel
-            showPipeProperties(pipeElement);
-        }
-    });
-           
-        // Keep click handler as well for compatibility, but with the same checks
-        pipeElement.click(function(event) {
-            try {
-                // Only process clicks in select mode
-                if (currentTool === 'select') {
-                    // Let the mouseup handler do the work
-                    console.log('Pipe click event triggered');
-                }
-            } catch (error) {
-                console.error('Error in pipe click handler:', error);
-            }
-        });
         
-        try {
-            // Update when dragged
-            pipeElement.on('dragend', function() {
-                try {
-                    const x = pipeElement.x();
-                    const y = pipeElement.y();
-                    console.log(`Pipe moved to ${x},${y}`);
-                } catch (posError) {
-                    console.error('Error getting pipe position:', posError);
-                }
-            });
-        } catch (error) {
-            console.error('Error setting up drag handler for pipe:', error);
-        }
-    }
-    
     // Initialize drag-and-drop for pipes
     const canvas = document.getElementById('canvas');
     
@@ -507,11 +396,7 @@ function loadPipe(pipeData) {
             .on('dragend', function() {
                 this.removeClass('dragging');
             });
-    }
-    
-    // Make pipe selectable
-    makePipeSelectable(pipeElement);
-    
+    }  
     console.log(`Loaded pipe ${pipeId} from saved data`);
     
     // Update pipe counter if needed
@@ -675,105 +560,6 @@ function applyPipeProperties(pipeElement) {
         // Check if SVG.js draggable plugin is available
         if (typeof SVG !== 'undefined') {
             console.log('SVG library is available');
-            
-            // Update pipe draggability based on locked status
-            if (newLocked) {
-                console.log('Locking pipe - disabling dragging');
-                // Disable dragging
-                try {
-                    // Get pipe by ID to ensure we have the latest reference
-                    const pipeById = SVG('#' + pipeElement.id());
-                    const pipeToUse = pipeById || pipeElement;
-                    
-                    console.log('Attempting to disable dragging on pipe:', pipeToUse.id());
-                    
-                    // Try multiple methods to disable dragging
-                    if (typeof pipeToUse.draggable === 'function') {
-                        pipeToUse.draggable(false);
-                        console.log('Disabled dragging via draggable(false)');
-                    } else if (pipeToUse.fixed) {
-                        pipeToUse.fixed();
-                        console.log('Disabled dragging via fixed()');
-                    } else if (pipeToUse.off) {
-                        // Try removing all drag-related event listeners
-                        pipeToUse.off('dragstart');
-                        pipeToUse.off('dragmove');
-                        pipeToUse.off('dragend');
-                        console.log('Removed drag event listeners');
-                    } else {
-                        console.error('No method available to disable dragging');
-                        
-                        // Last resort - try retrieving the element from DOM and manually setting draggable
-                        const domElement = document.getElementById(pipeElement.id());
-                        if (domElement) {
-                            domElement.setAttribute('draggable', 'false');
-                            console.log('Set draggable attribute on DOM element');
-                        }
-                    }
-                } catch (err) {
-                    console.error('Error disabling drag:', err);
-                }
-                
-                // Show locked state with green stroke
-                const pipeRect = pipeElement.findOne('rect');
-                if (pipeRect) {
-                    pipeRect.stroke({ width: 2, color: '#009900' });
-                    console.log('Applied green stroke to indicate locked state');
-                }
-            } else {
-                console.log('Unlocking pipe - enabling dragging');
-                // Enable dragging
-                try {
-                    // Get fresh reference to the pipe
-                    const pipeById = SVG('#' + pipeElement.id());
-                    const pipeToUse = pipeById || pipeElement;
-                    
-                    console.log('Attempting to enable dragging on pipe:', pipeToUse.id());
-                    
-                    // Try to enable dragging
-                    if (typeof pipeToUse.draggable === 'function') {
-                        pipeToUse.draggable(true);
-                        
-                        // Set up drag events again
-                        pipeToUse.on('dragstart', function() {
-                            this.addClass('dragging');
-                        });
-                        
-                        pipeToUse.on('dragend', function() {
-                            this.removeClass('dragging');
-                        });
-                        
-                        console.log('Enabled dragging via draggable(true) and set up event handlers');
-                    } else {
-                        console.error('No method available to enable dragging');
-                        
-                        // Try to recreate the draggable functionality
-                        try {
-                            // Try to apply draggable extension to the element
-                            if (SVG.extend && typeof pipeToUse.svg === 'function') {
-                                console.log('Trying to reapply draggable extension');
-                                pipeToUse.draggable();
-                            }
-                        } catch (extErr) {
-                            console.error('Error reapplying draggable extension:', extErr);
-                        }
-                    }
-                } catch (err) {
-                    console.error('Error enabling drag:', err);
-                }
-                
-                // If pipe is selected, show selection stroke, otherwise normal stroke
-                const pipeRect = pipeElement.findOne('rect');
-                if (pipeRect) {
-                    if (pipeElement.hasClass('selected')) {
-                        pipeRect.stroke({ width: 2, color: '#ff0000', dasharray: '5,5' });
-                        console.log('Applied red dashed stroke to indicate selection');
-                    } else {
-                        pipeRect.stroke({ width: 1, color: '#000' });
-                        console.log('Applied normal stroke');
-                    }
-                }
-            }
         } else {
             console.error('SVG library is not available!');
             // Show visual indicator even if SVG isn't available

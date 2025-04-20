@@ -41,6 +41,34 @@ Light Plot Designer is a Django-based application that allows lighting designers
 - 🔄 Stage measurement display
   - Toggle-able measurements
   - Improved stage representation
+### future use case behaviors and proporties 
+Additional Use Cases to Consider:
+- Element Duplication
+  - Copy/paste functionality
+  - Duplicate with offset (common in design tools)
+- Alignment Controls
+  - Align to grid
+  - Align selected elements (left, center, right, top, middle, bottom)
+  - Distribute evenly (horizontally or vertically)
+- Grouping and Ungrouping
+  - Group elements to move/edit them together
+  - Ungroup to edit individually
+- Snap to Grid/Guides
+ - Elements snap to grid points or guide lines
+ - Option to toggle snapping on/off
+- Context-Sensitive Handles
+- Different element types might need different handle behaviors
+  For example, pipes might need handles to stretch in length but not height
+- Quick Actions
+  - Right-click context menu for common actions
+  - Keyboard shortcuts for rotation (e.g., R+drag for rotation)
+- Mass Property Editing
+  - filtering in the sidebar (show only PAR-64 fixtures)
+  - Batch operations (select all PAR-64s, change their color)
+- Show light cone/direction for fixtures
+- Bring forward/send backward for elements that overlap
+- Undo/Redo
+- History of actions for undoing mistakes
 
 ### Planned Features
 - 📋 Fixture focus and beam visualization

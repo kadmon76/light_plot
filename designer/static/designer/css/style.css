@@ -45,6 +45,10 @@ body {
     z-index: 90;
 }
 
+.dragging {
+    opacity: 0.8;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
 /* Fixtures List */
 .fixture-item {
     background-color: #fff;
@@ -318,4 +322,23 @@ body {
         position: static;
         margin-top: 10px;
     }
+}
+/* Add to designer/static/designer/css/style.css */
+
+/* Locked elements */
+[data-locked="true"] {
+    cursor: not-allowed !important;
+}
+
+/* Pipe locked styling */
+.pipe-element[data-locked="true"] rect {
+    stroke: #009900;
+    stroke-width: 2px;
+}
+
+/* Fixture locked styling */
+.fixture-element[data-locked="true"] circle:first-child {
+    stroke: #009900;
+    stroke-width: 2px;
+    stroke-dasharray: 4,3;
 }
