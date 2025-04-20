@@ -33,6 +33,15 @@ The frontend JavaScript follows a behavior-based architecture:
 - **Command Pattern**: Used for undoable operations
 - **Event System**: For loose coupling between components
 
+# Code Cleanup Priorities
+
+## Architectural Transition
+The project is transitioning from an imperative, function-based approach to a modular, behavior-based architecture. During this transition, it's critical to:
+
+1. **Remove redundant code** - Identify and eliminate old-style implementations once the behavior-based version is working
+2. **Maintain clean interfaces** - Ensure API consistency between modules
+3. **Delete deprecated functions** - Don't leave "dead code" in the codebase
+
 ## Code Style Guidelines
 - **Formatting**: Follow PEP 8 style guide for Python code
 - **Imports**: Group imports: 1) Python standard library 2) Django modules 3) Third-party packages 4) Local modules
@@ -58,35 +67,19 @@ The frontend JavaScript follows a behavior-based architecture:
 - Use consistent naming conventions for functions and variables
 - Implement proper event cleanup to prevent memory leaks
 
-# Rotation Handle Implementation Notes
+## Implementation Sequence
+When implementing the behavior system, follow this sequence:
+1. Base element infrastructure (BaseElement, ElementRegistry)
+2. Core behaviors (Selectable, Draggable, Lockable, Rotatable)
+3. Element type implementations (fixtures, pipes)
+4. UI connections (property panel, tools)
 
-## Recent Implementation Attempts
-We've been working on implementing rotation handles for elements in the Light Plot Designer. We've tried:
+## Code Quality Guidelines
+- Each module should have a single, clear responsibility
+- Behaviors should be fully encapsulated with no leaky abstractions
+- Minimize dependencies between modules
+- Properly clean up resources (event listeners, etc.)
+- Comment complex code, especially behavior interactions
 
-1. Creating a new `RotatableBehavior` class to manage rotation handles
-2. Improving the DraggableBehavior to work consistently
-3. Enhancing the LockableBehavior with better visual feedback
-
-## Current Issues
-The implementation is not working as expected:
-
-1. The rotation handle from the test script doesn't properly rotate elements
-2. The handles don't follow elements when dragged
-3. The locking mechanism isn't applying consistently
-4. The behavior system integration needs refinement
-
-## Next Steps
-The next chat should focus on:
-
-1. Implementing a clean, working `RotatableBehavior` that's properly integrated with the behavior system
-2. Ensuring consistent visual feedback for both selected and locked states
-3. Making handles part of element groups so they move with elements
-4. Following the DRY principle for all these implementations
-5. Making the behaviors work with both fixtures and pipes
-
-## Approach Recommendation
-1. Start with one behavior at a time, verify it works
-2. Use SVG groups properly to ensure handles are children of elements
-3. Implement proper event handling for rotation
-4. Ensure behaviors cooperate (e.g., locking disables rotation)
-5. Add visual feedback with CSS rather than manual SVG attribute manipulation when possible
+## Testing
+The test-behavior-system.js file demonstrates working implementations of dragging, selecting, locking, and rotation. New implementations should maintain all this functionality but in the cleaner, modular architecture.
