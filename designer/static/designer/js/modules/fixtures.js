@@ -7,12 +7,14 @@
  * Handles fixture manipulation and fixture-specific operations
  */
 
- import { 
+import { 
     fixturesGroup, 
     selectedFixtures,
     showToast,
     clearSelectedFixtures
 } from './core.js';
+
+import elementFactory from '../types/element-factory.js';
 
 // Track user's fixture inventory
 let userFixtureInventory = [];
@@ -152,55 +154,13 @@ function showFixtureProperties(fixtureElement) {
 
 // Load a fixture from saved data
 function loadFixture(fixtureData) {
-    const fixtureId = fixtureData.fixture_id;
-    const instanceId = fixtureData.instance_id || `fixture-${Date.now()}`;
-    const x = fixtureData.x || 0;
-    const y = fixtureData.y || 0;
-    const rotation = fixtureData.rotation || 0;
-    const locked = fixtureData.locked || false;
-    
-    // Create fixture element
-    const fixtureElement = draw.group().id(instanceId);
-    fixtureElement.circle(30)
-        .fill(fixtureData.color || '#0066cc')
-        .center(0, 0);
-        
-    // Add fixture number/channel
-    fixtureElement.circle(16)
-        .fill('white')
-        .center(0, 0);
-        
-    fixtureElement.text(fixtureData.channel || '1')
-        .font({ size: 12, family: 'Arial', weight: 'bold', anchor: 'middle' })
-        .center(0, 0);
-        
-    // Position and rotate the fixture
-    fixtureElement.center(x, y);
-    if (rotation) {
-        fixtureElement.rotate(rotation);
-    }
-    
-    // Get fixture type for inventory
-    const fixtureType = fixtureData.fixture_type || 'Unknown Fixture';
-    
-    // Store fixture data
-    fixtureElement.attr({
-        'data-fixture-id': fixtureId,
-        'data-fixture-instance-id': instanceId,
-        'data-fixture-type': fixtureType,
-        'data-channel': fixtureData.channel || '1',
-        'data-purpose': fixtureData.purpose || '',
-        'data-color': fixtureData.color || '',
-        'data-notes': fixtureData.notes || '',
-        'data-dimmer': fixtureData.dimmer || '',
-        'data-rotation': rotation,
-        'data-locked': locked
-    });
-    
-    // Add to fixtures group
-    fixturesGroup.add(fixtureElement);
+    // Use the ElementFactory to create the fixture
+    const fixtureElement = elementFactory.loadFixture(fixtureData);
     
     // Add to user's inventory
+    const instanceId = fixtureElement.id();
+    const fixtureId = fixtureElement.prop('fixtureId');
+    const fixtureType = fixtureElement.prop('fixtureType');
     addToInventory(instanceId, fixtureId, fixtureType);
     
     console.log(`Loaded fixture ${fixtureId} from saved data`);
