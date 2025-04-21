@@ -14,7 +14,7 @@ import {
     clearSelectedFixtures
 } from './core.js';
 
-import elementFactory from '../types/element-factory.js';
+import elementFactory from './types/element-factory.js';
 
 // Track user's fixture inventory
 let userFixtureInventory = [];
@@ -152,18 +152,12 @@ function showFixtureProperties(fixtureElement) {
     };
 }
 
-// Load a fixture from saved data
 function loadFixture(fixtureData) {
-    // Use the ElementFactory to create the fixture
+    // Use ElementFactory to create the fixture
     const fixtureElement = elementFactory.loadFixture(fixtureData);
     
-    // Add to user's inventory
-    const instanceId = fixtureElement.id();
-    const fixtureId = fixtureElement.prop('fixtureId');
-    const fixtureType = fixtureElement.prop('fixtureType');
-    addToInventory(instanceId, fixtureId, fixtureType);
-    
-    console.log(`Loaded fixture ${fixtureId} from saved data`);
+    // Add to inventory
+    addToInventory(fixtureElement);
     
     return fixtureElement;
 }
@@ -171,27 +165,37 @@ function loadFixture(fixtureData) {
 // Inventory functions
 
 // Add a fixture to user's inventory
-function addToInventory(instanceId, fixtureId, fixtureType) {
-    userFixtureInventory.push({
-        instanceId: instanceId,
-        fixtureId: fixtureId,
-        fixtureType: fixtureType,
-        position: { x: 0, y: 0 },
-        rotation: 0,
-        locked: false,
-        properties: {
-            channel: 1,
-            dimmer: '',
-            color: '',
-            purpose: '',
-            notes: ''
-        }
-    });
-    
-    // Update inventory display
-    updateInventoryDisplay();
-}
+function addToInventory(fixtureElement) {
+    // Check if the input is actually a fixture element
+    if (!fixtureElement || typeof fixtureElement.serialize !== 'function') {
+        console.error('Invalid fixture element provided to addToInventory');
+        return null;
+    }
 
+    // Serialize the fixture element to get its data
+    try{
+        const inventoryData = {
+            ...fixtureElement.serialize(),
+            // Add any additional display-specific information
+            displayInfo: {
+                type: fixtureElement.prop('fixtureType'),
+                channel: fixtureElement.prop('channel'),
+                instanceId: fixtureElement.id()
+            }
+        };
+
+        // Add to inventory array
+        userFixtureInventory.push(inventoryData);
+
+        // Update UI (consider making this more decoupled in future)
+        updateInventoryDisplay();
+        console.log('Fixture added to inventory:', fixtureElement.id());
+        return inventoryData;
+    } catch (error) {
+        console.error('Error adding fixture to inventory:', error);
+        showToast('Error', 'Could not process fixture', 'error');
+    }
+}
 // Remove a fixture from inventory
 function removeFromInventory(instanceId) {
     userFixtureInventory = userFixtureInventory.filter(item => item.instanceId !== instanceId);

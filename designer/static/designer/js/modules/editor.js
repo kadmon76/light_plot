@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     import('./core.js')
         .then(core => {
             // Initialize the editor
-            console.log("here")
             try {
                 
                 core.initEditor();
