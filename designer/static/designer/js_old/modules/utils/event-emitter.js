@@ -1,5 +1,3 @@
-// File: designer/static/designer/js/utils/event-emitter.js
-
 /**
  * Event Emitter Module
  * 
@@ -11,7 +9,7 @@
  * EventEmitter class
  * Adds event handling capabilities to any class
  */
- export class EventEmitter {
+export class EventEmitter {
     constructor() {
         // Map of event types to arrays of listeners
         this._events = new Map();
@@ -86,6 +84,21 @@
     }
     
     /**
+     * Remove all listeners for an event type
+     * @param {String} [type] - Event type (if omitted, removes all listeners)
+     * @return {EventEmitter} this
+     */
+    removeAllListeners(type) {
+        if (type === undefined) {
+            this._events.clear();
+        } else if (this._events.has(type)) {
+            this._events.delete(type);
+        }
+        
+        return this;
+    }
+    
+    /**
      * Emit an event
      * @param {String} type - Event type
      * @param {...*} args - Arguments to pass to listeners
@@ -116,6 +129,24 @@
     listenerCount(type) {
         if (!this._events.has(type)) return 0;
         return this._events.get(type).length;
+    }
+    
+    /**
+     * Get array of listeners for an event type
+     * @param {String} type - Event type
+     * @return {Array<Function>} Array of listeners
+     */
+    listeners(type) {
+        if (!this._events.has(type)) return [];
+        return this._events.get(type).slice();
+    }
+    
+    /**
+     * Get array of all event types
+     * @return {Array<String>} Array of event types
+     */
+    eventNames() {
+        return Array.from(this._events.keys());
     }
 }
 

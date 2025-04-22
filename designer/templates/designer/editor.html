@@ -49,22 +49,16 @@
         cursor: pointer;
     }
     
-    .ai-prompt {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        right: 260px;
-        z-index: 100;
+    .fixture-item:hover {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
     }
     
-    .template-item {
-        margin-bottom: 10px;
-        padding: 5px;
-        border: 1px solid #ddd;
-        cursor: pointer;
+    .fixture-item.selected {
+        background-color: #e9f5ff;
+        border-color: #8ac4ff;
     }
     
-    /* Pipe styling */
     .pipe-item {
         display: flex;
         justify-content: space-between;
@@ -76,6 +70,16 @@
         background-color: #f8f9fa;
     }
     
+    .pipe-item:hover {
+        background-color: #e9ecef;
+        border-color: #ced4da;
+    }
+    
+    .pipe-item.selected {
+        background-color: #e9f5ff;
+        border-color: #8ac4ff;
+    }
+    
     .pipe-preview {
         height: 8px;
         min-width: 30px;
@@ -83,22 +87,23 @@
         margin-right: 10px;
     }
     
-    .pipe-actions {
-        display: flex;
-        gap: 5px;
+    /* Rotation handle styling */
+    .rotation-handle {
+        cursor: grab;
     }
     
-    /* Selected pipe styling */
-    .pipe-element.selected rect {
-        stroke: #ff0000;
-        stroke-width: 2px;
-        stroke-dasharray: 5, 5;
+    .rotation-handle:active {
+        cursor: grabbing;
     }
     
-    /* Locked pipe styling */
-    [data-locked="true"] rect {
-        stroke: #009900;
-        stroke-width: 2px;
+    /* Locked element styling */
+    [data-locked="true"] {
+        cursor: not-allowed !important;
+    }
+    
+    /* Dragging styling */
+    .dragging {
+        opacity: 0.7;
     }
 </style>
 {% endblock %}
@@ -153,9 +158,6 @@
                 <button class="nav-link" id="pipes-tab" data-bs-toggle="tab" data-bs-target="#pipes" type="button" role="tab">Pipes/Trusses</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab">Templates</button>
-            </li>
-            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="properties-tab" data-bs-toggle="tab" data-bs-target="#properties" type="button" role="tab">Properties</button>
             </li>
         </ul>
@@ -172,12 +174,11 @@
                          data-fixture-type="{{ fixture.fixture_type }}" 
                          data-channel="{{ fixture.channel|default:'1' }}"
                          data-color="{{ fixture.color|default:'#0066cc' }}">
-                        <div class="fixture-info">
-                            <strong>{{ fixture.name }}</strong>
-                            <span class="small text-muted">{{ fixture.fixture_type }}</span>
-                        </div>
-                        <div class="fixture-details">
-                            <span>Channel: {{ fixture.channel|default:'1' }}</span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ fixture.name }}</strong>
+                                <div class="small text-muted">{{ fixture.fixture_type }}</div>
+                            </div>
                         </div>
                     </div>
                     {% empty %}
@@ -195,23 +196,22 @@
                         <form id="pipe-form">
                             <div class="mb-2">
                                 <label class="form-label">Name</label>
-                                <input type="text" class="form-control form-control-sm" id="pipe-name" placeholder="e.g., FOH Pipe 1">
+                                <input type="text" class="form-control form-control-sm" id="pipe-form-name" placeholder="e.g., FOH Pipe 1">
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Type</label>
-                                <select class="form-select form-select-sm" id="pipe-type">
+                                <select class="form-select form-select-sm" id="pipe-form-type">
                                     <option value="pipe">Pipe</option>
                                     <option value="truss">Truss</option>
-                                    <option value="bar">Lighting Bar</option>
                                 </select>
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Length (meters)</label>
-                                <input type="number" class="form-control form-control-sm" id="pipe-length" value="10">
+                                <input type="number" class="form-control form-control-sm" id="pipe-form-length" value="10">
                             </div>
                             <div class="mb-2">
                                 <label class="form-label">Color</label>
-                                <select class="form-select form-select-sm" id="pipe-color">
+                                <select class="form-select form-select-sm" id="pipe-form-color">
                                     <option value="#666666">Silver</option>
                                     <option value="#333333">Dark Gray</option>
                                     <option value="#000000">Black</option>
@@ -228,17 +228,6 @@
                 </div>
             </div>
             
-            <div class="tab-pane fade" id="templates" role="tabpanel">
-                {% for template in templates %}
-                <div class="template-item" data-template-id="{{ template.id }}">
-                    <strong>{{ template.name }}</strong>
-                    <p>{{ template.description|truncatechars:50 }}</p>
-                </div>
-                {% empty %}
-                <p>No templates available yet.</p>
-                {% endfor %}
-            </div>
-            
             <div class="tab-pane fade" id="properties" role="tabpanel">
                 <div id="fixture-properties" style="display: none;">
                     <h6>Fixture Properties</h6>
@@ -253,7 +242,7 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Color</label>
-                            <input type="text" class="form-control form-control-sm" id="color">
+                            <input type="color" class="form-control form-control-sm" id="color">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Purpose</label>
@@ -313,11 +302,11 @@
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Grid Size</label>
-                            <input type="number" class="form-control form-control-sm" id="grid-size" value="1">
+                            <input type="number" class="form-control form-control-sm" id="grid-size" value="10">
                         </div>
                         <div class="mb-2">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="show-grid">
+                                <input class="form-check-input" type="checkbox" id="show-grid" checked>
                                 <label class="form-check-label">Show Grid</label>
                             </div>
                         </div>
@@ -326,62 +315,11 @@
             </div>
         </div>
     </div>
-    
-    <div class="ai-prompt">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="Ask the AI assistant..." id="ai-input">
-            <button class="btn btn-outline-secondary" type="button" id="ai-submit">
-                <i class="bi bi-send"></i>
-            </button>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"></script>
-<script>
-    // Make sure SVG.js is properly loaded
-    if (typeof SVG !== 'function') {
-        console.error('SVG.js library not loaded! Loading it now...');
-        document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"><\/script>');
-        document.write('<script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"><\/script>');
-    }
-    
-    // Configure SVG.js draggable settings
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof SVG === 'function' && SVG.Element && SVG.Element.prototype.draggable) {
-            // Configure global draggable settings to use a minimum drag distance
-            SVG.extend(SVG.Element, {
-                draggableMinDistance: 5, // Minimum pixels to move before considered a drag
-                draggableMinTime: 100    // Minimum milliseconds for drag
-            });
-            
-            console.log('SVG.js draggable settings configured');
-        }
-    });
-</script>
-<script src="{% static 'designer/js/modules/editor.js' %}?v={% now 'U' %}" type="module"></script>
-<!-- Test script for behavior system (simple, non-modular version) -->
-<script src="{% static 'designer/js/test-behavior-system.js' %}?v={% now 'U' %}"></script>
-
-<!-- Store SVG drawing globally for easier access -->
-<script>
-    // Make the SVG drawing accessible to test scripts
-    document.addEventListener('DOMContentLoaded', function() {
-        // Attempt to find and expose the main SVG drawing after it's created
-        const checkForSVG = setInterval(function() {
-            if (typeof SVG === 'function' && document.querySelector('#canvas svg')) {
-                window.mainDraw = SVG('#canvas svg');
-                console.log('Stored SVG drawing in window.mainDraw');
-                clearInterval(checkForSVG);
-            }
-        }, 500);
-        
-        // Stop checking after 10 seconds
-        setTimeout(function() {
-            clearInterval(checkForSVG);
-        }, 10000);
-    });
-</script>
+<script type="module" src="{% static 'designer/js/app.js' %}"></script>
 {% endblock %}
