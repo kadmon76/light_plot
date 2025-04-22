@@ -28,128 +28,91 @@ function showFixtureProperties(fixtureElement) {
     // Show the panel
     propertiesPanel.style.display = 'block';
     
-    // Get fixture data
-    const fixtureId = fixtureElement.attr('data-fixture-id');
-    const instanceId = fixtureElement.attr('data-fixture-instance-id');
-    const channel = fixtureElement.attr('data-channel') || '';
-    const dimmer = fixtureElement.attr('data-dimmer') || '';
-    const color = fixtureElement.attr('data-color') || '';
-    const purpose = fixtureElement.attr('data-purpose') || '';
-    const notes = fixtureElement.attr('data-notes') || '';
-    const locked = fixtureElement.attr('data-locked') === 'true';
+    // Make sure properties tab is active
+    const propertiesTab = document.getElementById('properties-tab');
+    if (propertiesTab) {
+        // Activate the properties tab
+        const tabInstance = new bootstrap.Tab(propertiesTab);
+        tabInstance.show();
+    }
+    
+    // Get fixture properties
+    const channel = fixtureElement.prop('channel') || '';
+    const dimmer = fixtureElement.prop('dimmer') || '';
+    const color = fixtureElement.prop('color') || '';
+    const purpose = fixtureElement.prop('purpose') || '';
+    const notes = fixtureElement.prop('notes') || '';
+    const locked = fixtureElement.isLocked && fixtureElement.isLocked();
     
     // Set form values
-    document.getElementById('channel').value = channel;
-    document.getElementById('dimmer').value = dimmer;
-    document.getElementById('color').value = color;
-    document.getElementById('purpose').value = purpose;
-    document.getElementById('notes').value = notes;
+    const channelInput = document.getElementById('channel');
+    const dimmerInput = document.getElementById('dimmer');
+    const colorInput = document.getElementById('color');
+    const purposeInput = document.getElementById('purpose');
+    const notesInput = document.getElementById('notes');
+    
+    if (channelInput) channelInput.value = channel;
+    if (dimmerInput) dimmerInput.value = dimmer;
+    if (colorInput) colorInput.value = color;
+    if (purposeInput) purposeInput.value = purpose;
+    if (notesInput) notesInput.value = notes;
     
     // Add or update lock toggle if it doesn't exist
-    let lockToggle = document.getElementById('fixture-lock-toggle');
-    if (!lockToggle) {
-        const lockContainer = document.createElement('div');
-        lockContainer.className = 'mb-3 form-check';
-        lockContainer.innerHTML = `
-            <input type="checkbox" class="form-check-input" id="fixture-lock-toggle">
-            <label class="form-check-label" for="fixture-lock-toggle">Lock fixture in place</label>
-        `;
-        document.getElementById('fixture-properties-form').insertBefore(
-            lockContainer, 
-            document.getElementById('delete-fixture-btn')
-        );
-        lockToggle = document.getElementById('fixture-lock-toggle');
+    let lockToggle = document.getElementById('fixture-locked');
+    if (lockToggle) {
+        lockToggle.checked = locked;
     }
-    
-    // Set lock state
-    lockToggle.checked = locked;
-    
-    // Add lock toggle handler
-    lockToggle.onchange = function() {
-        // Update lock state
-        fixtureElement.attr('data-locked', this.checked);
-        
-        // Enable/disable dragging
-        if (this.checked) {
-            fixtureElement.draggable(false);
-        } else {
-            fixtureElement.draggable(true);
-        }
-        
-        // Update inventory
-        updateInventoryLockState(instanceId, this.checked);
-    };
-    
-    // Add rotation input if it doesn't exist
-    let rotationInput = document.getElementById('fixture-rotation');
-    if (!rotationInput) {
-        const rotationContainer = document.createElement('div');
-        rotationContainer.className = 'mb-3';
-        rotationContainer.innerHTML = `
-            <label for="fixture-rotation" class="form-label">Rotation (degrees)</label>
-            <input type="number" class="form-control" id="fixture-rotation" min="0" max="359" step="5">
-        `;
-        document.getElementById('fixture-properties-form').insertBefore(
-            rotationContainer,
-            document.getElementById('delete-fixture-btn')
-        );
-        rotationInput = document.getElementById('fixture-rotation');
-    }
-    
-    // Set rotation value
-    rotationInput.value = fixtureElement.attr('data-rotation') || 0;
-    
-    // Add rotation handler
-    rotationInput.onchange = function() {
-        const rotation = parseInt(this.value) || 0;
-        fixtureElement.rotate(rotation);
-        fixtureElement.attr('data-rotation', rotation);
-        
-        // Update inventory
-        updateInventoryRotation(instanceId, rotation);
-    };
     
     // Event listeners for property changes
-    document.getElementById('channel').onchange = function() {
-        fixtureElement.attr('data-channel', this.value);
-        // Update channel number in fixture
-        const channelText = fixtureElement.findOne('text');
-        if (channelText) {
-            channelText.text(this.value || '');
-        }
-        
-        // Update inventory
-        updateInventoryProperties(instanceId, { channel: this.value });
-        
-        // Update inventory display
-        updateInventoryDisplay();
-    };
+    if (channelInput) {
+        channelInput.onchange = function() {
+            fixtureElement.prop('channel', this.value);
+        };
+    }
     
-    document.getElementById('dimmer').onchange = function() {
-        fixtureElement.attr('data-dimmer', this.value);
-        updateInventoryProperties(instanceId, { dimmer: this.value });
-    };
+    if (dimmerInput) {
+        dimmerInput.onchange = function() {
+            fixtureElement.prop('dimmer', this.value);
+        };
+    }
     
-    document.getElementById('color').onchange = function() {
-        fixtureElement.attr('data-color', this.value);
-        updateInventoryProperties(instanceId, { color: this.value });
-        
-        // Visually update the fixture color if it has a specific main circle
-        const mainCircle = fixtureElement.findOne('circle');
-        if (mainCircle) {
-            mainCircle.fill(this.value || '#0066cc');
-        }
-    };
+    if (colorInput) {
+        colorInput.onchange = function() {
+            fixtureElement.prop('color', this.value);
+        };
+    }
     
-    document.getElementById('purpose').onchange = function() {
-        fixtureElement.attr('data-purpose', this.value);
-        updateInventoryProperties(instanceId, { purpose: this.value });
-    };
+    if (purposeInput) {
+        purposeInput.onchange = function() {
+            fixtureElement.prop('purpose', this.value);
+        };
+    }
     
-    document.getElementById('notes').onchange = function() {
-        fixtureElement.attr('data-notes', this.value);
-        updateInventoryProperties(instanceId, { notes: this.value });
-    };
+    if (notesInput) {
+        notesInput.onchange = function() {
+            fixtureElement.prop('notes', this.value);
+        };
+    }
+    
+    if (lockToggle) {
+        lockToggle.onchange = function() {
+            fixtureElement.lock(this.checked);
+        };
+    }
+    
+    // Add rotation input if it exists in the DOM
+    const rotationInput = document.getElementById('fixture-rotation');
+    if (rotationInput) {
+        rotationInput.value = fixtureElement.prop('rotation') || 0;
+        rotationInput.onchange = function() {
+            const rotation = parseInt(this.value) || 0;
+            fixtureElement.rotate(rotation);
+        };
+    }
+    
+    // Store reference to current element being edited
+    propertiesPanel.dataset.currentElementId = fixtureElement.id();
+    console.log(`Showing properties for fixture: ${fixtureElement.id()}`);
 }
 
 function loadFixture(fixtureData) {

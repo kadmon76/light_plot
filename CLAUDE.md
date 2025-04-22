@@ -1,44 +1,44 @@
 # Project Status: Light Plot Designer
 
-## Current Architecture Focus
-- Implementing a DRY (Don't Repeat Yourself) approach
-- Building a behavior-based, composable element architecture
+## Current Architecture Progress
+- Refactored FixtureElement to properly extend BaseElement
+- Updated ElementFactory to leverage the improved BaseElement
+- Added event-based property system integration
+- Modified SelectableBehavior to dispatch events for property panel integration
 
-## Latest Achievements
-- Refactored `FixtureElement` to properly extend `BaseElement`
-- Implemented proper property management with event handling
-- Improved serialization by extending base methods
-- Added dedicated methods for property-specific visual updates
+## Latest Changes
+- Added element property change tracking and event dispatching
+- Updated ElementFactory to use a consistent approach for all element types
+- Modified SelectableBehavior to emit selection events for integration
+- Prepared new setupPropertyPanel implementation for event-based system
 
-## Current State
-- FixtureElement now properly leverages BaseElement functionality
-- Property changes trigger appropriate visual updates through events
-- Maintained backward compatibility with existing code
-- Better separation between base functionality and fixture-specific features
+## Element Creation Flow
+1. User interacts with UI or code requests element creation
+2. Request goes to ElementFactory (central factory for all elements)
+3. ElementFactory creates the appropriate element type
+4. Element is registered and behaviors are applied
+5. Property changes trigger events for UI updates
+
+## Selection Flow
+1. User clicks on element
+2. SelectableBehavior handles the click
+3. Element's select() method is called
+4. SelectableBehavior dispatches element:selected event
+5. Property panel listens for this event and displays properties
 
 ## Next Immediate Goals
-1. Update ElementFactory to work with refactored FixtureElement
-2. Ensure property panel integration with new property management
-3. Apply similar pattern to PipeElement class
-4. Test changes to ensure functionality is maintained
+1. Verify property panel integration is working correctly
+2. Debug any event dispatching issues
+3. Apply same refactoring pattern to PipeElement
+4. Enhance property panel to handle both element types consistently
 
-## Files to Prepare for Next Chat
-- `designer/static/designer/js/modules/types/element-factory.js`
-- `designer/static/designer/js/modules/properties.js`
-- `designer/static/designer/js/modules/types/pipe-element.js`
-- `designer/static/designer/js/modules/fixtures.js`
+## Files Modified
+- designer/static/designer/js/modules/types/element-factory.js
+- designer/static/designer/js/modules/elements/behaviors/selectable.js
+- designer/static/designer/js/modules/properties.js
 
-## Scope for Next Chat
-- Refactor ElementFactory to leverage improved BaseElement integration
-- Update property panel integration to work with event-based property system
-- Begin applying pattern to PipeElement class
-
-## Guiding Principles
-- Maintain DRY approach
-- Keep element creation flexible
-- Minimize code redundancy
-- Leverage event system for property changes
-
-## Questions to Address
-- How to best update property panel to work with the new event system?
-- What common functionality from FixtureElement can be extracted for PipeElement?
+## Debugging Recommendations
+1. Add console.log statements to verify events are being dispatched
+2. Check property panel element IDs match expected values
+3. Verify element property access through prop() method works
+4. Test direct manipulation of properties to see panel updates

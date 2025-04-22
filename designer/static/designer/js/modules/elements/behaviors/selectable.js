@@ -135,10 +135,21 @@ export class SelectableBehavior extends BaseBehavior {
      * @param {Boolean} selected - Whether to select the element
      * @private
      */
-    _selectElement(selected) {
+     _selectElement(selected) {
         if (!this._element || !this._element.select) return;
         
         this._element.select(selected);
+        
+        // Dispatch custom event for property panel integration
+        if (selected) {
+            document.dispatchEvent(new CustomEvent('element:selected', {
+                detail: { element: this._element }
+            }));
+        } else {
+            document.dispatchEvent(new CustomEvent('element:deselected', {
+                detail: { element: this._element }
+            }));
+        }
         
         // Call appropriate callback
         if (selected && typeof this._options.onSelect === 'function') {
@@ -147,6 +158,7 @@ export class SelectableBehavior extends BaseBehavior {
             this._options.onDeselect(this._element);
         }
     }
+    
     
     /**
      * Apply selected visual state
