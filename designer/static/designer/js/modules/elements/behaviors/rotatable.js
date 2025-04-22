@@ -83,63 +83,66 @@
       * @param {Object} event - Selection change event
       * @private
       */
-     _handleSelectionChange(event) {
-         if (!this._enabled || !this._element) return;
-         
-         if (event.selected) {
-             this._createRotationHandle();
-         } else {
-             this._removeRotationHandle();
-         }
-     }
+    _handleSelectionChange(event) {
+        if (!this._enabled || !this._element) return;
+        
+        try {
+            if (event.selected) {
+                this._createRotationHandle();
+            } else {
+                this._removeRotationHandle();
+            }
+        } catch (error) {
+            console.error('Error in rotation handle creation:', error);
+        }
+    }
      
      /**
       * Create rotation handle
       * @private
       */
-     _createRotationHandle() {
-         // Remove existing handle if any
-         this._removeRotationHandle();
-         
-         const svgElement = this._element.svgElement();
-         if (!svgElement) return;
-         
-         // Get the SVG document
-         const svg = svgElement.doc();
-         if (!svg) return;
-         
-         // Calculate element center and handle position
-         const bbox = this._element.getBBox();
-         const centerX = bbox.x + bbox.width / 2;
-         const centerY = bbox.y + bbox.height / 2;
-         
-         // Store rotation center for later use
-         this._rotationCenter = { x: centerX, y: centerY };
-         
-         // Create rotation handle group
-         this._rotationHandleGroup = svg.group().addClass('rotation-handle-group');
-         
-         // Calculate handle position (above the element)
-         const handleDistance = this._options.handleDistance;
-         const handleX = centerX;
-         const handleY = centerY - handleDistance;
-         
-         // Create a line from center to handle
-         this._rotationLine = this._rotationHandleGroup.line(centerX, centerY, handleX, handleY)
-             .stroke({ width: 1, color: '#999', dasharray: '3,3' });
-         
-         // Create the handle
-         this._rotationHandle = this._rotationHandleGroup.circle(this._options.handleSize)
-             .fill(this._options.handleFill)
-             .stroke({ width: 1, color: this._options.handleStroke })
-             .center(handleX, handleY)
-             .addClass('rotation-handle')
-             .css({ cursor: 'grab' });
-         
-         // Add mouse events to handle
-         this._rotationHandle.on('mousedown', this._onMouseDown);
-     }
-     
+    _createRotationHandle() {
+        // Remove existing handle if any
+        this._removeRotationHandle();
+        
+        const svgElement = this._element.svgElement();
+        if (!svgElement) return;
+        
+        // Get the SVG document using .root() method instead of .doc()
+        const svg = svgElement.root();
+        if (!svg) return;
+        
+        // Calculate element center and handle position
+        const bbox = this._element.getBBox();
+        const centerX = bbox.x + bbox.width / 2;
+        const centerY = bbox.y + bbox.height / 2;
+        
+        // Store rotation center for later use
+        this._rotationCenter = { x: centerX, y: centerY };
+        
+        // Create rotation handle group
+        this._rotationHandleGroup = svg.group().addClass('rotation-handle-group');
+        
+        // Calculate handle position (above the element)
+        const handleDistance = this._options.handleDistance;
+        const handleX = centerX;
+        const handleY = centerY - handleDistance;
+        
+        // Create a line from center to handle
+        this._rotationLine = this._rotationHandleGroup.line(centerX, centerY, handleX, handleY)
+            .stroke({ width: 1, color: '#999', dasharray: '3,3' });
+        
+        // Create the handle
+        this._rotationHandle = this._rotationHandleGroup.circle(this._options.handleSize)
+            .fill(this._options.handleFill)
+            .stroke({ width: 1, color: this._options.handleStroke })
+            .center(handleX, handleY)
+            .addClass('rotation-handle')
+            .css({ cursor: 'grab' });
+        
+        // Add mouse events to handle
+        this._rotationHandle.on('mousedown', this._onMouseDown);
+    }     
      /**
       * Remove rotation handle
       * @private

@@ -9,7 +9,7 @@
  * - Event handling
  * - Behavior management integration
  */
-
+console.log('Loading base element module')
 import { draw } from '../core.js';
 import { EventEmitter } from '../utils/event-emitter.js';
 

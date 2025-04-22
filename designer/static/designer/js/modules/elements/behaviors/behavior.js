@@ -5,7 +5,7 @@
  * Behaviors represent composable pieces of functionality that can be added to elements.
  * Core to the DRY architecture by allowing functionality to be shared across element types.
  */
-
+console.log('Loading base behavior module');
 import { EventEmitter } from '../../utils/event-emitter.js';
 
 /**

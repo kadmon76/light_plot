@@ -21,9 +21,30 @@ let userFixtureInventory = [];
 
 // Show fixture properties in the properties panel
 function showFixtureProperties(fixtureElement) {
+    console.log('showFixtureProperties called with element:', fixtureElement);
     const propertiesPanel = document.getElementById('fixture-properties');
     
-    if (!propertiesPanel) return;
+    // Log all properties to understand what's available
+    console.log('Fixture Element Properties:', fixtureElement.properties());
+    
+    // Try multiple ways to find the fixture item
+    let fixtureItem = null;
+    
+    // Try finding by instance ID first
+    fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureElement.id()}"]`);
+    
+    // If not found, try by fixture type
+    if (!fixtureItem) {
+        const fixtureType = fixtureElement.prop('fixtureType') || fixtureElement.prop('fixture_type');
+        fixtureItem = document.querySelector(`.fixture-item:contains("${fixtureType}")`);
+    }
+    
+    console.log('Fixture item from DOM:', fixtureItem);
+    
+    if (!propertiesPanel) {
+        console.error('Properties panel not found');
+        return;
+    }
     
     // Show the panel
     propertiesPanel.style.display = 'block';
@@ -31,18 +52,25 @@ function showFixtureProperties(fixtureElement) {
     // Make sure properties tab is active
     const propertiesTab = document.getElementById('properties-tab');
     if (propertiesTab) {
-        // Activate the properties tab
         const tabInstance = new bootstrap.Tab(propertiesTab);
         tabInstance.show();
     }
     
-    // Get fixture properties
-    const channel = fixtureElement.prop('channel') || '';
+    // Get fixture properties with more robust fallbacks
+    const channel = fixtureElement.prop('channel') || 
+                    (fixtureItem ? fixtureItem.dataset.channel : '') || 
+                    '1';
     const dimmer = fixtureElement.prop('dimmer') || '';
-    const color = fixtureElement.prop('color') || '';
+    const color = fixtureElement.prop('color') || 
+                  (fixtureItem ? fixtureItem.dataset.color : '') || 
+                  '#0066cc';
     const purpose = fixtureElement.prop('purpose') || '';
     const notes = fixtureElement.prop('notes') || '';
     const locked = fixtureElement.isLocked && fixtureElement.isLocked();
+    
+    console.log('Extracted properties:', { 
+        channel, dimmer, color, purpose, notes, locked 
+    });
     
     // Set form values
     const channelInput = document.getElementById('channel');
@@ -57,7 +85,7 @@ function showFixtureProperties(fixtureElement) {
     if (purposeInput) purposeInput.value = purpose;
     if (notesInput) notesInput.value = notes;
     
-    // Add or update lock toggle if it doesn't exist
+    // Add or update lock toggle
     let lockToggle = document.getElementById('fixture-locked');
     if (lockToggle) {
         lockToggle.checked = locked;

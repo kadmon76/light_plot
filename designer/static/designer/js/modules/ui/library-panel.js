@@ -314,10 +314,14 @@
       * @private
       */
      _placeFixture(fixtureId, x, y) {
-         // Use element factory to create the fixture
-         const fixture = elementFactory.createFixture(fixtureId, x, y);
-         
-         console.log(`Placed fixture ${fixtureId} at position ${x},${y}`);
+        console.log(`library-panel: Creating fixture ${fixtureId} at position ${x},${y}`);
+        // Use element factory to create the fixture
+        const fixture = elementFactory.createFixture(fixtureId, x, y);
+
+        console.log('library-panel: Fixture created:', fixture);
+        console.log('library-panel: Fixture has behaviors:', fixture._behaviors);
+        
+        console.log(`Placed fixture ${fixtureId} at position ${x},${y}`);
      }
      
      /**

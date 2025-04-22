@@ -6,7 +6,7 @@
  * Implements a theatrical lighting fixture using the base element architecture
  * with composable behaviors.
  */
-
+ console.log('Loading fixture element module');
  import { BaseElement } from '../elements/base-element.js';
  import behaviorManager from '../elements/behavior-manager.js';
  import { fixturesGroup } from '../core.js';
@@ -112,19 +112,24 @@
       * @private
       */
      _applyBehaviors(behaviors) {
-         behaviors.forEach(behavior => {
-             if (typeof behavior === 'string') {
-                 // Simple string behavior name
-                 behaviorManager.applyBehavior(this, behavior);
-             } else if (behavior && typeof behavior === 'object') {
-                 // Behavior config object with type and options
-                 const { type, options = {} } = behavior;
-                 if (type) {
-                     behaviorManager.applyBehavior(this, type, options);
-                 }
-             }
-         });
-     }
+        console.log('FixtureElement: Applying behaviors:', behaviors);
+
+        behaviors.forEach(behavior => {
+            if (typeof behavior === 'string') {
+                console.log(`FixtureElement: Applying string behavior: ${behavior}`);
+                // Simple string behavior name
+                behaviorManager.applyBehavior(this, behavior);
+            } else if (behavior && typeof behavior === 'object') {
+                console.log(`FixtureElement: Applying object behavior: ${behavior.type}`);
+                // Behavior config object with type and options
+                const { type, options = {} } = behavior;
+                if (type) {
+                    behaviorManager.applyBehavior(this, type, options);
+                }
+            }
+        });
+        console.log('FixtureElement: Behaviors after applying:', this._behaviors);
+    }
      
      /**
       * Update the channel display

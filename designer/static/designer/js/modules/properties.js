@@ -3,7 +3,7 @@
  *
  * Handles properties panel functionality for fixtures and stage
  */
-
+console.log('Loading properties module');
 import { 
     gridGroup, 
     selectedFixtures, 
@@ -19,16 +19,24 @@ import { showPipeProperties } from './pipes.js';
 function setupPropertyPanel() {
     const propertiesPanel = document.getElementById('fixture-properties');
     const pipePropertiesPanel = document.getElementById('pipe-properties');
-    
+
+    console.log('Setting up property panel event listeners');
+
     // Listen for element selection events from the event system
     document.addEventListener('element:selected', function(event) {
+        console.log('Property Panel: Received element:selected event', event.detail);
         const element = event.detail.element;
         
-        if (!element) return;
-        
+        if (!element){
+            console.log('Property Panel: No element provided in event');
+            return;
+        }
+        console.log(`Property Panel: Selected element type is ${element.type()}`);
+
         // Handle different element types
         switch(element.type()) {
             case 'fixture':
+                console.log('Property Panel: Showing fixture properties');
                 // Show fixture properties and hide pipe properties
                 if (pipePropertiesPanel) pipePropertiesPanel.style.display = 'none';
                 showFixtureProperties(element);
@@ -36,12 +44,14 @@ function setupPropertyPanel() {
                 
             case 'pipe':
                 // Show pipe properties and hide fixture properties
+                console.log('Property Panel: Showing pipe properties');
                 if (propertiesPanel) propertiesPanel.style.display = 'none';
                 showPipeProperties(element);
                 break;
                 
             default:
                 // Unknown element type, hide all property panels
+                console.log(`Property Panel: Unknown element type: ${element.type()}`);
                 if (propertiesPanel) propertiesPanel.style.display = 'none';
                 if (pipePropertiesPanel) pipePropertiesPanel.style.display = 'none';
                 break;
@@ -50,11 +60,18 @@ function setupPropertyPanel() {
     
     // Listen for element deselection
     document.addEventListener('element:deselected', function(event) {
+        console.log('Element deselected event received:', event.detail);
         // Hide property panels when elements are deselected
-        if (propertiesPanel) propertiesPanel.style.display = 'none';
-        if (pipePropertiesPanel) pipePropertiesPanel.style.display = 'none';
+        if (propertiesPanel){
+            propertiesPanel.style.display = 'none';
+            console.log('Hiding fixture properties panel');
+        }
+        if (pipePropertiesPanel) {
+            pipePropertiesPanel.style.display = 'none';
+            console.log('Hiding pipe properties panel');
+        }
     });
-    
+    console.log('Property panel event listeners setup complete');
     // Listen for property changes to update UI if needed
     document.addEventListener('element:propertyChange', function(event) {
         const { elementId, elementType, propertyKey, propertyValue } = event.detail;

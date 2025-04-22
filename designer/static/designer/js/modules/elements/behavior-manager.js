@@ -5,7 +5,7 @@
  * Implements the Behavior pattern to enable composable functionality.
  * Core to the DRY architecture by allowing elements to share behaviors.
  */
-
+console.log('Loading behavior manager module')
 import { EventEmitter } from '../utils/event-emitter.js';
 
 // Import behaviors

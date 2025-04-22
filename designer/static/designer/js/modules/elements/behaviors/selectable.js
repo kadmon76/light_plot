@@ -4,7 +4,7 @@
  * Adds selection functionality to elements.
  * Handles visual feedback and selection state.
  */
-
+console.log('Loading selectable behavior module');
 import BaseBehavior from './behavior.js';
 
 /**
@@ -137,15 +137,18 @@ export class SelectableBehavior extends BaseBehavior {
      */
      _selectElement(selected) {
         if (!this._element || !this._element.select) return;
-        
+
+        console.log(`SelectableBehavior: Setting element ${this._element.id()} selection to ${selected}`);
         this._element.select(selected);
         
         // Dispatch custom event for property panel integration
         if (selected) {
+            console.log(`SelectableBehavior: Dispatching element:selected event for ${this._element.id()}`);
             document.dispatchEvent(new CustomEvent('element:selected', {
                 detail: { element: this._element }
             }));
         } else {
+            console.log(`SelectableBehavior: Dispatching element:deselected event for ${this._element.id()}`);
             document.dispatchEvent(new CustomEvent('element:deselected', {
                 detail: { element: this._element }
             }));

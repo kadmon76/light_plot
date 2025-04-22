@@ -167,11 +167,21 @@
                 </div>
                 <div id="fixtures-list">
                     {% for fixture in fixtures %}
-                    <div class="fixture-item" data-fixture-id="{{ fixture.id }}">
-                        {{ fixture.name }} ({{ fixture.fixture_type }})
+                    <div class="fixture-item" 
+                         data-fixture-id="{{ fixture.id }}" 
+                         data-fixture-type="{{ fixture.fixture_type }}" 
+                         data-channel="{{ fixture.channel|default:'1' }}"
+                         data-color="{{ fixture.color|default:'#0066cc' }}">
+                        <div class="fixture-info">
+                            <strong>{{ fixture.name }}</strong>
+                            <span class="small text-muted">{{ fixture.fixture_type }}</span>
+                        </div>
+                        <div class="fixture-details">
+                            <span>Channel: {{ fixture.channel|default:'1' }}</span>
+                        </div>
                     </div>
                     {% empty %}
-                    <p>No fixtures available yet.</p>
+                    <p class="text-muted">No fixtures available. Add fixtures in the admin panel.</p>
                     {% endfor %}
                 </div>
             </div>

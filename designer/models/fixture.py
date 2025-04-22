@@ -5,6 +5,14 @@ class LightFixture(models.Model):
     name = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)
     fixture_type = models.CharField(max_length=50)
+    
+    # New fields for properties
+    channel = models.CharField(max_length=20, blank=True, null=True, default='1')
+    dimmer = models.CharField(max_length=20, blank=True, null=True)
+    color = models.CharField(max_length=7, blank=True, null=True, default='#0066cc')
+    purpose = models.CharField(max_length=200, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
     wattage = models.IntegerField(default=0)
     beam_angle = models.FloatField(default=0.0)
     weight = models.FloatField(default=0.0)

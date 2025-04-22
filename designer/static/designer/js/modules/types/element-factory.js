@@ -4,7 +4,7 @@
  * Factory for creating different element types.
  * Centralizes element creation logic and integrates with the element registry.
  */
-
+ console.log('Loading element factory module');
  import { FixtureElement } from './fixture-element.js';
  import { PipeElement } from './pipe-element.js';
  import elementRegistry from '../elements/element-registry.js';
@@ -113,6 +113,8 @@
      * @return {FixtureElement} The created fixture
      */
     createFixture(fixtureId, x, y, properties = {}) {
+        console.log(`ElementFactory: Creating fixture ${fixtureId} at position ${x},${y}`);
+
         // Get fixture type from the DOM
         const fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`);
         const fixtureType = fixtureItem ? fixtureItem.textContent.trim() : 'Unknown Fixture';
@@ -120,6 +122,11 @@
         // Generate a unique instance ID
         const instanceId = `fixture-${Date.now()}`;
         
+        // Gather additional properties from the DOM item if available
+        const domProperties = fixtureItem ? {
+            channel: fixtureItem.dataset.channel || '1',
+            color: fixtureItem.dataset.color || '#0066cc'
+        } : {};
         // Create element with standard properties
         const element = this._createElement('fixture', instanceId, {
             fixtureId: fixtureId,
@@ -132,7 +139,9 @@
             rotation: properties.rotation || 0,
             ...properties
         }, x, y);
-        
+
+        console.log('ElementFactory: Fixture created:', element);
+        console.log('ElementFactory: Fixture has behaviors:', element._behaviors);
         return element;
     }
     /**
