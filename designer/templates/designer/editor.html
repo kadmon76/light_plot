@@ -267,8 +267,12 @@
                         
                         <!-- Common fields for both addressing systems -->
                         <div class="mb-2">
-                            <label class="form-label">Dimmer</label>
-                            <input type="number" class="form-control form-control-sm" id="dimmer">
+                            <label class="form-label">DMX Universe</label>
+                            <input type="number" class="form-control form-control-sm" id="dmx-universe" min="1" max="128" value="1">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">DMX Address</label>
+                            <input type="number" class="form-control form-control-sm" id="dmx-address" min="1" max="512" value="1">
                         </div>
                         <div class="mb-2">
                             <label class="form-label">Color</label>
