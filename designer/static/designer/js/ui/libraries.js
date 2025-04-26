@@ -30,6 +30,16 @@
      console.log('Libraries: Library panels initialized');
  }
  
+
+/**
+ * Get the current addressing system from the dropdown
+ * @return {String} 'unified' or 'families'
+ */
+ function getAddressingSystem() {
+    const addressingSelect = document.getElementById('addressing-system');
+    return addressingSelect ? addressingSelect.value : 'unified';
+}
+
  /**
   * Set up fixture library
   */
@@ -63,7 +73,7 @@
              window._selectedLibraryItem = {
                  type: 'fixture',
                  id: fixtureId,
-                 fixtureType: fixtureType,
+                 fixtureType: getAddressingSystem() === 'families' ? 'channel' : 'fixture', // Default to channel for families
                  channel: item.dataset.channel || '1',
                  color: item.dataset.color || '#0066cc'
              };
@@ -271,13 +281,15 @@
      
      if (item.type === 'fixture') {
          // Create fixture at position
-         const properties = {
-             channel: item.channel,
-             color: item.color,
-             fixtureType: item.fixtureType
-         };
+        const properties = {
+            channel: item.channel,
+            color: item.color,
+            fixtureType: item.fixtureType
+        };
          
-         createFixture(item.fixtureType, x, y, properties);
+        createFixture(item.fixtureType, x, y, properties);
+         // Lock the addressing system after the first fixture is added
+        lockAddressingSystem(true);
      } else if (item.type === 'pipe') {
          // Create pipe at position
          const properties = {
@@ -294,3 +306,40 @@
  export default {
      initLibraries
  };
+
+
+
+
+
+
+/**
+ * Lock or unlock the addressing system dropdown
+ * @param {Boolean} locked - Whether to lock the dropdown
+ */
+ function lockAddressingSystem(locked) {
+    const addressingSelect = document.getElementById('addressing-system');
+    if (addressingSelect) {
+        addressingSelect.disabled = locked;
+        
+        // Add a tooltip explaining why it's locked if locked
+        if (locked) {
+            addressingSelect.title = "Addressing system cannot be changed after fixtures are added";
+            
+            // Optional: Add a small lock icon next to the dropdown
+            const lockIcon = document.createElement('i');
+            lockIcon.className = 'bi bi-lock-fill ms-2';
+            lockIcon.style.fontSize = '12px';
+            const parent = addressingSelect.parentElement;
+            if (parent && !parent.querySelector('.lock-icon')) {
+                lockIcon.classList.add('lock-icon');
+                parent.appendChild(lockIcon);
+            }
+        } else {
+            addressingSelect.title = "";
+            const lockIcon = addressingSelect.parentElement?.querySelector('.lock-icon');
+            if (lockIcon) lockIcon.remove();
+        }
+    }
+}
+
+export { lockAddressingSystem };

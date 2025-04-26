@@ -33,7 +33,8 @@
              purpose: options.properties?.purpose || '',
              notes: options.properties?.notes || '',
              rotation: options.properties?.rotation || 0,
-             fixtureType: options.properties?.fixtureType || 'unknown'
+             fixtureType: options.properties?.fixtureType || 'channel'
+             
          };
          
          // Initialize base element with these properties
@@ -139,15 +140,15 @@
       * Update the channel display
       * @private
       */
-     _updateChannelDisplay() {
-         const channel = this.prop('channel');
-         console.log(`FixtureElement: Updating channel display to ${channel} for fixture ${this.id()}`);
-         
-         const textElement = this._svgElement.findOne('text');
-         if (textElement) {
-             textElement.text(channel.toString());
-         }
-     }
+    _updateChannelDisplay() {
+        const channel = this.prop('channel');
+        console.log(`FixtureElement: Updating channel display to ${channel} for fixture ${this.id()}`);
+        
+        const textElement = this._svgElement.findOne('text');
+        if (textElement) {
+            textElement.text(channel.toString());
+        }
+    }
      
      /**
       * Update the fixture's color

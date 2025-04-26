@@ -105,22 +105,31 @@
   * Select an element
   * @param {BaseElement|null} element - Element to select, or null to clear selection
   */
- export function selectElement(element) {
-     const currentElement = state.selectedElement;
-     
-     // Deselect current element if it exists and is different
-     if (currentElement && currentElement !== element && currentElement.select) {
-         currentElement.select(false);
-     }
-     
-     // Update selected element
-     setState('selectedElement', element);
-     
-     // Select new element if it exists
-     if (element && element.select) {
-         element.select(true);
-     }
-     
-     // Emit selection change event
-     events.emit('selection:change', { element });
- }
+  export function selectElement(element) {
+    console.log('State: selectElement called with:', element);
+    
+    const currentElement = state.selectedElement;
+    
+    // Deselect current element if it exists and is different
+    if (currentElement && currentElement !== element && currentElement.select) {
+        console.log(`State: Deselecting current element: ${currentElement.id()}`);
+        currentElement.select(false);
+    }
+    
+    // Update selected element
+    setState('selectedElement', element);
+    
+    // Select new element if it exists
+    if (element && element.select) {
+        console.log(`State: Selecting new element: ${element.id()}`);
+        element.select(true);
+    }
+    
+    // Emit selection change event
+    console.log('State: Emitting selection:change event');
+    const event = new CustomEvent('selection:change', { detail: { element } });
+    document.dispatchEvent(event);
+    events.emit('selection:change', { element });
+    
+    console.log('State: selectElement completed');
+}

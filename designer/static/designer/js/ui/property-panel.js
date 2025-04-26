@@ -26,20 +26,44 @@
  /**
   * Set up listener for element selection
   */
- function setupSelectionListener() {
-     // Listen for selection changes in the application state
-     document.addEventListener('selection:change', (event) => {
-         const element = event.element;
-         
-         if (element) {
-             console.log(`PropertyPanel: Element selected, type: ${element.type()}, id: ${element.id()}`);
-             showPropertiesForElement(element);
-         } else {
-             console.log('PropertyPanel: No element selected, hiding property panels');
-             hideAllPropertyPanels();
-         }
-     });
- }
+  function setupSelectionListener() {
+    console.log('PropertyPanel: Setting up selection listener');
+    
+    // Listen for selection changes in the application state
+    document.addEventListener('selection:change', (event) => {
+        console.log('PropertyPanel: Received selection:change event', event);
+        
+        const element = event.element;
+        
+        if (element) {
+            console.log(`PropertyPanel: Element selected, type: ${element.type()}, id: ${element.id()}`);
+            showPropertiesForElement(element);
+        } else {
+            console.log('PropertyPanel: No element selected, hiding property panels');
+            hideAllPropertyPanels();
+        }
+    });
+    
+    // Also listen for state changes directly
+    const originalSelectElement = window.selectElement;
+    if (originalSelectElement) {
+        console.log('PropertyPanel: Hooking into selectElement function');
+        window.selectElement = function(element) {
+            console.log('PropertyPanel: selectElement called with:', element);
+            const result = originalSelectElement(element);
+            
+            // Manually trigger property panel update
+            if (element) {
+                console.log(`PropertyPanel: Manually updating properties for element: ${element.id()}`);
+                showPropertiesForElement(element);
+            } else {
+                hideAllPropertyPanels();
+            }
+            
+            return result;
+        };
+    }
+}
  
  /**
   * Show properties for a specific element
@@ -72,49 +96,74 @@
   * Show fixture properties
   * @param {FixtureElement} fixture - Fixture element
   */
- function showFixtureProperties(fixture) {
-     console.log(`PropertyPanel: Showing properties for fixture ${fixture.id()}`);
-     
-     const propertiesPanel = document.getElementById('fixture-properties');
-     if (!propertiesPanel) {
-         console.error('PropertyPanel: Fixture properties panel not found');
-         return;
-     }
-     
-     // Show the panel
-     propertiesPanel.style.display = 'block';
-     
-     // Make sure properties tab is active
-     activatePropertiesTab();
-     
-     // Get fixture properties
-     const channel = fixture.prop('channel');
-     const dimmer = fixture.prop('dimmer');
-     const color = fixture.prop('color');
-     const purpose = fixture.prop('purpose');
-     const notes = fixture.prop('notes');
-     const isLocked = fixture.isLocked();
-     
-     // Set form values
-     const channelInput = document.getElementById('channel');
-     const dimmerInput = document.getElementById('dimmer');
-     const colorInput = document.getElementById('color');
-     const purposeInput = document.getElementById('purpose');
-     const notesInput = document.getElementById('notes');
-     const lockedCheckbox = document.getElementById('fixture-locked');
-     
-     if (channelInput) channelInput.value = channel;
-     if (dimmerInput) dimmerInput.value = dimmer;
-     if (colorInput) colorInput.value = color;
-     if (purposeInput) purposeInput.value = purpose;
-     if (notesInput) notesInput.value = notes;
-     if (lockedCheckbox) lockedCheckbox.checked = isLocked;
-     
-     // Store reference to fixture in panel
-     propertiesPanel.dataset.elementId = fixture.id();
-     
-     console.log(`PropertyPanel: Fixture properties loaded for ${fixture.id()}`);
- }
+/**
+ * Set up fixture property change handlers
+ */
+ function setupFixturePropertyHandlers() {
+    // Unified addressing system - Fixture Number
+    const fixtureNumberInput = document.getElementById('fixture-number');
+    if (fixtureNumberInput) {
+        fixtureNumberInput.addEventListener('change', () => {
+            updateFixtureProperty('channel', fixtureNumberInput.value);
+        });
+    }
+    
+    // Families addressing system - Type
+    const fixtureTypeSelect = document.getElementById('fixture-type');
+    if (fixtureTypeSelect) {
+        fixtureTypeSelect.addEventListener('change', () => {
+            updateFixtureProperty('fixtureType', fixtureTypeSelect.value);
+        });
+    }
+    
+    // Families addressing system - Number
+    const familyNumberInput = document.getElementById('fixture-family-number');
+    if (familyNumberInput) {
+        familyNumberInput.addEventListener('change', () => {
+            updateFixtureProperty('channel', familyNumberInput.value);
+        });
+    }
+    
+    // Dimmer
+    const dimmerInput = document.getElementById('dimmer');
+    if (dimmerInput) {
+        dimmerInput.addEventListener('change', () => {
+            updateFixtureProperty('dimmer', dimmerInput.value);
+        });
+    }
+    
+    // Color
+    const colorInput = document.getElementById('color');
+    if (colorInput) {
+        colorInput.addEventListener('change', () => {
+            updateFixtureProperty('color', colorInput.value);
+        });
+    }
+    
+    // Purpose
+    const purposeInput = document.getElementById('purpose');
+    if (purposeInput) {
+        purposeInput.addEventListener('change', () => {
+            updateFixtureProperty('purpose', purposeInput.value);
+        });
+    }
+    
+    // Notes
+    const notesInput = document.getElementById('notes');
+    if (notesInput) {
+        notesInput.addEventListener('change', () => {
+            updateFixtureProperty('notes', notesInput.value);
+        });
+    }
+    
+    // Locked
+    const lockedCheckbox = document.getElementById('fixture-locked');
+    if (lockedCheckbox) {
+        lockedCheckbox.addEventListener('change', () => {
+            toggleFixtureLock(lockedCheckbox.checked);
+        });
+    }
+}
  
  /**
   * Show pipe properties
@@ -183,56 +232,9 @@
  /**
   * Set up fixture property change handlers
   */
- function setupFixturePropertyHandlers() {
-     // Channel
-     const channelInput = document.getElementById('channel');
-     if (channelInput) {
-         channelInput.addEventListener('change', () => {
-             updateFixtureProperty('channel', channelInput.value);
-         });
-     }
-     
-     // Dimmer
-     const dimmerInput = document.getElementById('dimmer');
-     if (dimmerInput) {
-         dimmerInput.addEventListener('change', () => {
-             updateFixtureProperty('dimmer', dimmerInput.value);
-         });
-     }
-     
-     // Color
-     const colorInput = document.getElementById('color');
-     if (colorInput) {
-         colorInput.addEventListener('change', () => {
-             updateFixtureProperty('color', colorInput.value);
-         });
-     }
-     
-     // Purpose
-     const purposeInput = document.getElementById('purpose');
-     if (purposeInput) {
-         purposeInput.addEventListener('change', () => {
-             updateFixtureProperty('purpose', purposeInput.value);
-         });
-     }
-     
-     // Notes
-     const notesInput = document.getElementById('notes');
-     if (notesInput) {
-         notesInput.addEventListener('change', () => {
-             updateFixtureProperty('notes', notesInput.value);
-         });
-     }
-     
-     // Locked
-     const lockedCheckbox = document.getElementById('fixture-locked');
-     if (lockedCheckbox) {
-         lockedCheckbox.addEventListener('change', () => {
-             toggleFixtureLock(lockedCheckbox.checked);
-         });
-     }
- }
- 
+/**
+ * Set up fixture property change handlers
+ */
  /**
   * Set up pipe property change handlers
   */
@@ -420,3 +422,13 @@
      
      return null;
  }
+
+ /**
+ * Get the current addressing system from the dropdown
+ * @return {String} 'unified' or 'families'
+ */
+function getAddressingSystem() {
+    const addressingSelect = document.getElementById('addressing-system');
+    return addressingSelect ? addressingSelect.value : 'unified';
+}
+

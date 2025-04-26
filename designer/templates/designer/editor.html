@@ -116,6 +116,16 @@
             <span class="input-group-text">Title</span>
             <input type="text" class="form-control" name="plot_title" value="{% if plot %}{{ plot.title }}{% else %}Untitled Plot{% endif %}">
         </div>
+        
+        <!-- Add the addressing system dropdown here -->
+        <div class="input-group ms-3" style="width: 300px;">
+            <span class="input-group-text">Addressing</span>
+            <select class="form-select" name="addressing_system" id="addressing-system">
+                <option value="unified" {% if plot.addressing_system == 'unified' %}selected{% endif %}>Unified Fixture Numbers</option>
+                <option value="families" {% if plot.addressing_system == 'families' %}selected{% endif %}>Channel/Spot Families</option>
+            </select>
+        </div>
+        
         {% if plot %}
         <input type="hidden" name="plot_id" value="{{ plot.id }}">
         {% endif %}
@@ -232,10 +242,30 @@
                 <div id="fixture-properties" style="display: none;">
                     <h6>Fixture Properties</h6>
                     <form id="fixture-properties-form">
-                        <div class="mb-2">
-                            <label class="form-label">Channel</label>
-                            <input type="number" class="form-control form-control-sm" id="channel">
+                        <!-- Unified addressing system fields -->
+                        <div class="unified-addressing" style="display: none;">
+                            <div class="mb-2">
+                                <label class="form-label">Fixture Number</label>
+                                <input type="number" class="form-control form-control-sm" id="fixture-number">
+                            </div>
                         </div>
+                        
+                        <!-- Families addressing system fields -->
+                        <div class="families-addressing" style="display: none;">
+                            <div class="mb-2">
+                                <label class="form-label">Type</label>
+                                <select class="form-control form-control-sm" id="fixture-type">
+                                    <option value="channel">Channel</option>
+                                    <option value="spot">Spot</option>
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Number</label>
+                                <input type="number" class="form-control form-control-sm" id="fixture-family-number">
+                            </div>
+                        </div>
+                        
+                        <!-- Common fields for both addressing systems -->
                         <div class="mb-2">
                             <label class="form-label">Dimmer</label>
                             <input type="number" class="form-control form-control-sm" id="dimmer">
@@ -322,4 +352,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"></script>
 <script type="module" src="{% static 'designer/js/app.js' %}"></script>
+<script src="{% static 'designer/js/test-fixture.js' %}"></script>
+
+<script>
+    document.getElementById('save-button').addEventListener('click', function() {
+        // Get addressing system value
+        const addressingSystem = document.getElementById('addressing-system').value;
+        
+        // Add it to the plot data when saving
+        // ... (your existing save code here) ...
+        
+        // Make sure to include the addressing_system field in your API request
+        
+    });
+</script>
 {% endblock %}

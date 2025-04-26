@@ -116,6 +116,7 @@ def save_plot(request):
             'venue': request.data.get('venue', ''),
             'designer': request.data.get('designer', ''),
             'date': request.data.get('date'),
+            'addressing_system': request.data.get('addressing_system', 'unified'),
             'plot_data': request.data.get('plot_data', {}),
             'fixtures': request.data.get('fixtures', [])
         }

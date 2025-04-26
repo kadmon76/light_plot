@@ -18,6 +18,17 @@ class LightingPlot(models.Model):
     designer = models.CharField(max_length=100, blank=True)
     date = models.DateField(null=True, blank=True)
     
+    ADDRESSING_SYSTEMS = [
+    ('unified', 'Unified Fixture Numbers'),
+    ('families', 'Channel/Spot Families'),
+    ]
+    addressing_system = models.CharField(
+        max_length=10, 
+        choices=ADDRESSING_SYSTEMS, 
+        default='unified',
+        help_text="How fixtures are addressed in this plot"
+    )
+    
     # Plot data - could store the entire SVG or JSON representation
     plot_data = models.JSONField(default=dict, help_text="JSON data of the entire plot")
     

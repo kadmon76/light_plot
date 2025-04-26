@@ -49,15 +49,16 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 - **Loose Coupling**: Components communicate via events
 - **Composable Behaviors**: Elements gain functionality through behavior composition
 
-## First Phase Goals
+## Recent Updates
 
-The goal of the first phase is to create a minimal but structurally sound editor where users can:
-
-1. Create a new lighting plot
-2. Place lighting fixtures and pipes/trusses on the canvas
-3. Select, move, rotate, and lock elements
-4. Edit element properties (channel, color, purpose, etc.)
-5. Save and load plots
+### Added Lighting Console Paradigm Support
+- Implemented two addressing systems for fixtures:
+  - **Unified Approach**: Single numbering system for all fixtures
+  - **Families Approach (Compulite style)**: Separate numbering for channels and spots
+- Added plot-level setting for the addressing system
+- Modified property panel to adapt to the selected addressing system
+- Enhanced fixture creation to respect the chosen paradigm
+- Added locking mechanism to prevent addressing system changes after fixtures are added
 
 ## Current Status
 
@@ -69,6 +70,7 @@ The goal of the first phase is to create a minimal but structurally sound editor
 - ✅ Fixture and pipe element implementations
 - ✅ Property panel for editing element properties
 - ✅ Library panels for selecting and placing elements
+- ✅ Multiple addressing system support (unified vs. families)
 - 🔄 Save/load functionality (needs completion)
 
 ## Next Steps
