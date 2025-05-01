@@ -70,25 +70,30 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 - Enhanced fixture creation to respect the chosen paradigm
 - Added locking mechanism to prevent addressing system changes after fixtures are added
 
+### Added "Add Fixtures" Modal
+- Created a dedicated fixtures-modal.js module to handle modal creation and management
+- Integrated with existing UI by using a single "Add Fixtures" button
+- Implemented dynamic form that changes based on selected placement pattern (line, grid, circle, manual)
+- Created flexible structure to accommodate different fixture types
+- Populated fixture types from the backend dynamically when the modal opens
+
 ## Next Steps
 
-1. Implement the "Add Fixtures" modal
-   - Create button in the UI to open the modal
-   - Design form layout for fixture properties
-   - Add support for creating multiple fixtures
-   - Implement placement patterns (line, grid, manual)
-   - Handle DMX addressing
+1. Implement form validation and error handling in the "Add Fixtures" modal
+   - Add client-side validation for required fields
+   - Provide visual feedback for validation errors
+   - Handle edge cases (zero quantity, invalid patterns, etc.)
 
-2. Complete the libraries panel functionality
+2. Implement fixture creation functionality
+   - Create fixtures based on the selected pattern
+   - Calculate placement positions for line, grid, and circle patterns
+   - Handle manual placement mode
+   - Apply selected properties (color, starting channel, purpose)
+
+3. Complete the libraries panel functionality
    - Fixture properties (fixture id, naming, DMX address, gel number/color, purpose, notes, lock)
    - Grouping and filtering (by color, purpose, type, universe)
    - Validation to prevent conflicts (duplicate IDs)
-
-3. Implement save/load functionality with Django backend
-4. Add element deletion and other editing operations
-5. Implement keyboard shortcuts and additional tools
-6. Improve visual styling and user experience
-7. Add basic validation and error handling
 
 ## Code Organization
 designer/static/designer/js/

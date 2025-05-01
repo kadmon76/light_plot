@@ -12,6 +12,7 @@
  import { initLibraries, lockAddressingSystem } from './ui/libraries.js'; 
  import { setupEventListeners } from './core/events.js';
  import { getState } from './core/state.js'; 
+ import { initFixturesModal } from './ui/fixtures-modal.js';
  /**
  * Light Plot Designer - Main Application
  * 
@@ -36,7 +37,7 @@
      initToolbar();
      initPropertyPanel();
      initLibraries();
-    
+     initFixturesModal();
         /**
      * Check if there are fixtures in the plot and lock addressing system if needed
      */
