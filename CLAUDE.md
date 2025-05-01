@@ -38,6 +38,7 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
    - toolbar.js: Tool selection and buttons
    - property-panel.js: Element property editing
    - libraries.js: Fixture and pipe libraries
+   - fixtures-modal.js: Modal for adding multiple fixtures at once
 
 5. **Utils**:
    - svg-utils.js: SVG helper functions
@@ -54,46 +55,46 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 
 ## Recent Updates
 
-### Added Modal System
-- Implemented a reusable modal utility (modal-utils.js) based on Bootstrap
-- Created functions for creating, showing, hiding, and updating modals
-- Support for different modal sizes, custom content, and event handlers
-- Special helper for confirmation modals
-- Maintains references to created modals for easy management
+### Improved Modal System
+- Utilized the existing modal utility (modal-utils.js) based on Bootstrap
+- Fixed ID consistency issues to ensure modals are properly referenced
+- Added constants to prevent typos in modal IDs
 
-### Added Lighting Console Paradigm Support
-- Implemented two addressing systems for fixtures:
-  - **Unified Approach**: Single numbering system for all fixtures
-  - **Families Approach (Compulite style)**: Separate numbering for channels and spots
-- Added plot-level setting for the addressing system
-- Modified property panel to adapt to the selected addressing system
-- Enhanced fixture creation to respect the chosen paradigm
-- Added locking mechanism to prevent addressing system changes after fixtures are added
+### Enhanced Form Validation
+- Implemented Bootstrap's built-in form validation system instead of custom validation
+- Added validation for all required fields with appropriate error messages
+- Set up form validation feedback using Bootstrap classes
+- Added mechanism for custom validation (like checking for duplicate IDs)
+- Improved user experience with focused fields on error and form reset on modal close
 
-### Added "Add Fixtures" Modal
-- Created a dedicated fixtures-modal.js module to handle modal creation and management
-- Integrated with existing UI by using a single "Add Fixtures" button
-- Implemented dynamic form that changes based on selected placement pattern (line, grid, circle, manual)
-- Created flexible structure to accommodate different fixture types
-- Populated fixture types from the backend dynamically when the modal opens
+### Fixture Creation UI
+- Completed the "Add Fixtures" modal with support for different placement patterns:
+  - Line pattern: horizontal or vertical arrangement with spacing control
+  - Grid pattern: rows and columns with horizontal and vertical spacing
+  - Circle pattern: radius and start angle controls
+  - Manual placement: one-by-one fixture placement
+- Dynamic form updates based on the selected pattern
+- Integration with fixture types from the existing sidebar
 
 ## Next Steps
 
-1. Implement form validation and error handling in the "Add Fixtures" modal
-   - Add client-side validation for required fields
-   - Provide visual feedback for validation errors
-   - Handle edge cases (zero quantity, invalid patterns, etc.)
+1. Code Review and Refactoring
+   - Identify and fix potential issues with modal lifecycle management
+   - Address potential memory leaks from recreating modals
+   - Make pattern options more data-driven instead of large HTML strings
+   - Standardize module exports
+   - Optimize event listener handling
 
 2. Implement fixture creation functionality
    - Create fixtures based on the selected pattern
    - Calculate placement positions for line, grid, and circle patterns
    - Handle manual placement mode
-   - Apply selected properties (color, starting channel, purpose)
+   - Apply selected properties (color, starting ID, purpose)
 
-3. Complete the libraries panel functionality
-   - Fixture properties (fixture id, naming, DMX address, gel number/color, purpose, notes, lock)
-   - Grouping and filtering (by color, purpose, type, universe)
-   - Validation to prevent conflicts (duplicate IDs)
+3. Backend Integration
+   - Add API endpoint for checking if a fixture ID is already in use
+   - Implement server-side validation
+   - Save created fixtures to the database
 
 ## Code Organization
 designer/static/designer/js/
@@ -117,7 +118,8 @@ designer/static/designer/js/
 │   ├── canvas.js           # SVG canvas management
 │   ├── toolbar.js          # Toolbar controls
 │   ├── property-panel.js   # Properties panel
-│   └── libraries.js        # Library panels
+│   ├── libraries.js        # Library panels
+│   └── fixtures-modal.js   # Add fixtures modal
 └── utils/                  # Utilities and helpers
     ├── svg-utils.js        # SVG helper functions
     ├── event-emitter.js    # Event handling utilities
