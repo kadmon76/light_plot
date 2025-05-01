@@ -33,6 +33,7 @@
  * hideModal('confirm-delete');
  */
 
+import A11yModal from './a11y-modal.js';
 // Store references to created modals
 const _modals = {};
 
@@ -65,7 +66,9 @@ export function createModal(options) {
     modalElement.className = 'modal fade';
     modalElement.id = options.id;
     modalElement.setAttribute('tabindex', '-1');
-    modalElement.setAttribute('aria-hidden', 'true');
+    
+    // IMPORTANT: Remove aria-hidden, use inert instead
+    modalElement.setAttribute('inert', '');
     
     // Add size class if specified
     const sizeClass = options.size ? `modal-${options.size}` : '';
@@ -128,20 +131,25 @@ export function createModal(options) {
     if (options.onCancel) {
         modalElement.addEventListener('hide.bs.modal', options.onCancel);
     }
-    
+    // Enhance modal initialization with accessibility
+    const a11yModal = new A11yModal(modalElement, {
+        onShow: options.onShow,
+        onHide: options.onHide
+    });
     // Create modal controller object
     const modal = {
         element: modalElement,
         instance: modalInstance,
-        show: () => modalInstance.show(),
-        hide: () => modalInstance.hide(),
-        toggle: () => modalInstance.toggle(),
-        update: (newOptions) => updateModal(options.id, newOptions),
-        dispose: () => {
-            modalInstance.dispose();
-            modalElement.remove();
-            delete _modals[options.id];
-        }
+        a11yModal: a11yModal,
+        show: () => {
+            a11yModal.show();
+            return modalInstance.show();
+        },
+        hide: () => {
+            a11yModal.hide();
+            return modalInstance.hide();
+        },
+        // Rest of the methods remain the same
     };
     
     // Store reference
