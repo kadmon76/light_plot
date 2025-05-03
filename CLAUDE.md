@@ -76,6 +76,16 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 - Dynamic form updates based on the selected pattern
 - Integration with fixture types from the existing sidebar
 
+## SVG Normalization for Fixtures (2024-06)
+
+- All fixture SVGs (from backend/admin or future user uploads) are now automatically normalized and centered in the frontend.
+- The normalization logic is implemented in the `FixtureElement` class:
+  - Any SVG, regardless of its original `viewBox` or size, is scaled and centered to fit a standard 40x40 box at (0,0).
+  - This ensures consistent sizing and placement for all fixtures on the canvas.
+- This approach is DRY: the normalization logic lives in one place and applies to all fixture creation flows.
+- The backend continues to provide the SVG markup, but the frontend is responsible for rendering consistency.
+- This prepares the app for future user-uploaded fixtures, ensuring robust and predictable rendering.
+
 ## Next Steps
 
 1. Code Review and Refactoring

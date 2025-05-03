@@ -10,6 +10,8 @@
 import { createModal, showModal } from '../utils/modal-utils.js';
 import { getState, setCurrentTool } from '../core/state.js';
 import { TOOLS } from '../core/config.js';
+import { createFixture } from '../elements/fixture-element.js';
+import behaviorManager from '../behaviors/behavior-manager.js';
 
 // Create the modal when the module is imported
 let fixturesModal;
@@ -356,8 +358,14 @@ export default {
  * Handle form submission
  * @param {Event} event - Submit event
  */
-function handleFormSubmission(event) {
+ function handleFormSubmission(event) {
     const form = event.currentTarget;
+    
+    // Reset any custom validation messages first
+    const fixtureIdInput = document.getElementById('starting-channel');
+    if (fixtureIdInput) {
+        fixtureIdInput.setCustomValidity('');
+    }
     
     // Prevent default form submission
     event.preventDefault();
@@ -366,7 +374,13 @@ function handleFormSubmission(event) {
     // Add the "was-validated" class to show validation feedback
     form.classList.add('was-validated');
     
-    // Check if the form is valid
+    // Explicitly check if fixture ID is positive
+    const fixtureId = parseInt(fixtureIdInput?.value);
+    if (fixtureIdInput && (isNaN(fixtureId) || fixtureId <= 0)) {
+        fixtureIdInput.setCustomValidity('Fixture ID must be a positive number');
+    }
+    
+    // Check if the form is valid (after our custom validation)
     if (form.checkValidity()) {
         // If valid, proceed with handleAddFixtures
         handleAddFixtures();
@@ -380,57 +394,80 @@ function handleFormSubmission(event) {
 }
 
 /**
- * Handle adding fixtures when the form validates
+ * Check if a fixture ID already exists
+ * @param {Number} fixtureId - Fixture ID to check
+ * @return {Boolean} Whether the ID exists
+ */
+function hasDuplicateFixtureId(fixtureId) {
+    // Get all existing fixtures
+    const fixturesGroup = getState('fixturesGroup');
+    if (!fixturesGroup) return false;
+
+    // Check if any fixture has this ID
+    return fixturesGroup.children().some(fixture => {
+        const element = fixture.data('element');
+        return element && element.getProperty('fixtureId') === fixtureId;
+    });
+}
+
+/**
+ * Handle Add Fixtures button click
+ * Creates and adds fixtures based on form values
  */
 function handleAddFixtures() {
-    console.log('FixturesModal: Add fixtures button clicked');
+    console.log('FixturesModal: Creating fixtures from form values');
     
     // Get form values
-    const fixtureType = document.getElementById('fixture-type-select').value;
-    const quantity = parseInt(document.getElementById('fixture-quantity').value);
-    const pattern = document.getElementById('placement-pattern').value;
-    const color = document.getElementById('fixture-color').value;
-    const fixtureId = parseInt(document.getElementById('starting-channel').value); // Renamed but kept ID the same
-    const channelIncrement = parseInt(document.getElementById('channel-increment').value);
-    const purpose = document.getElementById('fixture-purpose').value;
+    const fixtureTypeSelect = document.getElementById('fixture-type-select');
+    const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
     
-    // Check for duplicate fixture IDs - this would be an API call
-    // This is just a placeholder - you would need to implement the actual check
-    checkIfFixtureIdExists(fixtureId).then(exists => {
-        if (exists) {
-            // If the ID already exists, show an error
-            document.getElementById('starting-channel').setCustomValidity('This fixture ID is already in use');
-            document.getElementById('add-fixtures-form').classList.add('was-validated');
-            document.getElementById('starting-channel').focus();
-            return;
-        }
-        
-        // If the ID is available, clear any custom validity
-        document.getElementById('starting-channel').setCustomValidity('');
-        
-        // Collect pattern-specific options
-        const patternOptions = getPatternOptions(pattern);
-        
-        console.log('FixturesModal: Form validation passed, proceeding with fixture creation');
-        
-        // Log the final data
-        console.log({
-            fixtureType,
-            quantity,
-            pattern,
-            color,
-            fixtureId,
-            channelIncrement,
-            purpose,
-            patternOptions
-        });
-        
-        // Close the modal
-        fixturesModal.hide();
-        
-        // Reset form validation state
-        document.getElementById('add-fixtures-form').classList.remove('was-validated');
-    });
+    // Get form values
+    const formValues = {
+        fixtureType: selectedOption.value, // Use the fixture ID
+        quantity: parseInt(document.getElementById('fixture-quantity').value) || 1,
+        pattern: document.getElementById('placement-pattern').value,
+        color: document.getElementById('fixture-color').value,
+        fixtureId: parseInt(document.getElementById('starting-channel').value) || 1
+    };
+    
+    console.log('handleAddFixtures: Form values:', formValues);
+    
+    // Create properties object for the fixture
+    const properties = {
+        channel: formValues.fixtureId.toString(),
+        color: formValues.color,
+        purpose: document.getElementById('fixture-purpose').value || '',
+        fixtureType: formValues.fixtureType // Use the fixture ID
+    };
+    
+    console.log('handleAddFixtures: Creating fixture with properties:', properties);
+    
+    // Get the SVG drawing and its viewport
+    const svgDrawing = document.querySelector('#canvas svg');
+    if (!svgDrawing) {
+        console.error('FixturesModal: SVG drawing not found');
+        return;
+    }
+    
+    // Calculate center position of the viewport
+    const viewBox = svgDrawing.viewBox.baseVal;
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+    
+    // Create the fixture at the center of the viewport
+    const fixture = createFixture(formValues.fixtureType, centerX, centerY, properties);
+    
+    // Add to canvas
+    const fixturesGroup = getState('fixturesGroup');
+    if (fixturesGroup) {
+        fixturesGroup.add(fixture._svgElement);
+    }
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('add-fixtures-modal'));
+    if (modal) {
+        modal.hide();
+    }
 }
 
 /**
@@ -465,33 +502,6 @@ function getPatternOptions(pattern) {
 }
 
 /**
- * Check if a fixture ID already exists
- * @param {Number} fixtureId - Fixture ID to check
- * @return {Promise<Boolean>} Promise resolving to true if the ID exists, false otherwise
- */
-async function checkIfFixtureIdExists(fixtureId) {
-    // This is a stub - you would need to implement the actual API call
-    try {
-        // Example API call:
-        // const response = await fetch(`/api/check-fixture-id/${fixtureId}/`);
-        // const data = await response.json();
-        // return data.exists;
-        
-        // For now, just return false to simulate that the ID is available
-        console.log(`Checking if fixture ID ${fixtureId} exists...`);
-        
-        // Simulate an API delay
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // For testing, let's say ID 1 is already taken
-        return fixtureId === 1;
-    } catch (error) {
-        console.error('Error checking fixture ID:', error);
-        return false; // Assume it doesn't exist if we can't check
-    }
-}
-
-/**
  * Handle modal show event - populate fixture types and set up validation
  */
 function handleModalShow() {
@@ -509,28 +519,44 @@ function handleModalShow() {
         fixtureTypeSelect.remove(1);
     }
     
-    // Get fixture items from the DOM (this connects to your existing UI)
-    // We'll use the fixture library that's already in the sidebar
+    // Get fixture items from the DOM
     const fixtureItems = document.querySelectorAll('.fixture-item');
     
-    // Populate the select with available fixture types
+    // Group fixtures by category
+    const fixturesByCategory = {};
     fixtureItems.forEach(item => {
-        const fixtureId = item.dataset.fixtureId;
-        const fixtureType = item.dataset.fixtureType;
-        const fixtureName = item.querySelector('strong')?.textContent || fixtureType;
-        
-        if (fixtureId && fixtureType) {
-            const option = document.createElement('option');
-            option.value = fixtureId;
-            option.textContent = fixtureName;
-            option.dataset.fixtureType = fixtureType;
-            
-            // Store additional data attributes
-            if (item.dataset.channel) option.dataset.channel = item.dataset.channel;
-            if (item.dataset.color) option.dataset.color = item.dataset.color;
-            
-            fixtureTypeSelect.appendChild(option);
+        const categoryPath = item.dataset.categoryPath;
+        if (!fixturesByCategory[categoryPath]) {
+            fixturesByCategory[categoryPath] = [];
         }
+        fixturesByCategory[categoryPath].push(item);
+    });
+    
+    // Populate the select with available fixture types
+    Object.entries(fixturesByCategory).forEach(([categoryPath, items]) => {
+        // Add category as optgroup
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = categoryPath;
+        
+        // Add fixtures in this category
+        items.forEach(item => {
+            const fixtureId = item.dataset.fixtureId;
+            const fixtureName = item.querySelector('strong')?.textContent || 'Unknown Fixture';
+            
+            if (fixtureId) {
+                const option = document.createElement('option');
+                option.value = fixtureId;
+                option.textContent = fixtureName;
+                
+                // Store additional data attributes
+                if (item.dataset.channel) option.dataset.channel = item.dataset.channel;
+                if (item.dataset.color) option.dataset.color = item.dataset.color;
+                
+                optgroup.appendChild(option);
+            }
+        });
+        
+        fixtureTypeSelect.appendChild(optgroup);
     });
     
     // Set up pattern selection change handler
@@ -555,5 +581,76 @@ function handleModalShow() {
     if (form) {
         form.classList.remove('was-validated');
     }
+}
+
+/**
+ * Handle add fixtures button click
+ * @private
+ */
+function _handleAddFixtures() {
+    console.log('FixturesModal: Starting fixture creation');
+    
+    // Get form values
+    const fixtureTypeSelect = document.getElementById('fixture-type-select');
+    const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
+    const fixtureType = selectedOption.dataset.fixtureType;
+    const quantity = parseInt(document.getElementById('fixture-quantity').value);
+    const pattern = document.getElementById('placement-pattern').value;
+    const color = document.getElementById('fixture-color').value;
+    const fixtureId = parseInt(document.getElementById('starting-channel').value);
+    const channelIncrement = parseInt(document.getElementById('channel-increment').value);
+    const purpose = document.getElementById('fixture-purpose').value;
+
+    // Check for duplicate fixture ID
+    if (hasDuplicateFixtureId(fixtureId)) {
+        console.error('FixturesModal: Duplicate fixture ID found:', fixtureId);
+        return;
+    }
+
+    // Get SVG drawing
+    const svgDrawing = document.querySelector('#svg-drawing');
+    if (!svgDrawing) {
+        console.error('FixturesModal: SVG drawing not found');
+        return;
+    }
+
+    // Calculate center position
+    const viewBox = svgDrawing.viewBox.baseVal;
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+
+    // Create fixture at center
+    const fixture = createFixture(fixtureType, centerX, centerY, {
+        color,
+        fixtureId,
+        channelIncrement,
+        purpose
+    });
+
+    if (!fixture) {
+        console.error('FixturesModal: Failed to create fixture');
+        return;
+    }
+
+    // Apply droppable behavior
+    const droppableBehavior = behaviorManager.applyBehavior(fixture, 'droppable', {
+        snapToGrid: true,
+        gridSize: 10
+    });
+
+    if (!droppableBehavior) {
+        console.error('FixturesModal: Failed to apply droppable behavior');
+        return;
+    }
+
+    // Close modal
+    fixturesModal.hide();
+    const form = document.getElementById('add-fixtures-form');
+    if (form) {
+        form.reset();
+        form.classList.remove('was-validated');
+    }
+
+    console.log('FixturesModal: Fixture created and dropped successfully');
 }
 
