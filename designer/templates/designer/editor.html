@@ -181,13 +181,14 @@
                     {% for fixture in fixtures %}
                     <div class="fixture-item" 
                          data-fixture-id="{{ fixture.id }}" 
-                         data-fixture-type="{{ fixture.fixture_type }}" 
+                         data-fixture-type="{{ fixture.manufacturer }}" 
                          data-channel="{{ fixture.channel|default:'1' }}"
-                         data-color="{{ fixture.color|default:'#0066cc' }}">
+                         data-color="{{ fixture.color|default:'#0066cc' }}"
+                         data-svg-icon="{{ fixture.svg_icon }}">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <strong>{{ fixture.name }}</strong>
-                                <div class="small text-muted">{{ fixture.fixture_type }}</div>
+                                <div class="small text-muted">{{ fixture.type }}</div>
                             </div>
                         </div>
                     </div>

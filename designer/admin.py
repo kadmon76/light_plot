@@ -1,11 +1,17 @@
 from django.contrib import admin
-from .models import LightFixture, StageTemplate, LightingPlot, PlotFixture, Stage
+from .models import LightFixture, StageTemplate, LightingPlot, PlotFixture, Stage, Category
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'element_type', 'parent')
+    list_filter = ('element_type', 'parent')
+    search_fields = ('name', 'description')
 
 @admin.register(LightFixture)
 class LightFixtureAdmin(admin.ModelAdmin):
-    list_display = ('name', 'fixture_type', 'manufacturer')
-    list_filter = ('fixture_type', 'manufacturer')
-    search_fields = ('name', 'fixture_type')
+    list_display = ('name', 'category', 'manufacturer')
+    list_filter = ('category', 'manufacturer')
+    search_fields = ('name', 'category__name')
 
 @admin.register(StageTemplate)
 class StageTemplateAdmin(admin.ModelAdmin):

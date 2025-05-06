@@ -35,7 +35,7 @@ class FixturePresenter(BasePresenter):
                 'wattage': fixture.wattage,
                 'weight': fixture.weight,
                 'icon': fixture.icon_url,
-                'svg_data': fixture.svg_data
+                'svg_data': fixture.svg_icon
             })
         
         return fixture_data

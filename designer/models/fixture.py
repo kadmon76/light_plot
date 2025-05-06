@@ -4,7 +4,7 @@ class LightFixture(models.Model):
     """Model representing a type of lighting fixture"""
     name = models.CharField(max_length=100)
     manufacturer = models.CharField(max_length=100)
-    fixture_type = models.CharField(max_length=50)
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='fixtures')
     
     # New fields for properties
     channel = models.CharField(max_length=20, blank=True, null=True, default='1')
@@ -26,7 +26,8 @@ class LightFixture(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['name']
+        ordering = ['category', 'name']
     
     def __str__(self):
-        return f"{self.name} ({self.fixture_type})"
+        category_name = self.category.name if self.category else 'Uncategorized'
+        return f"{self.name} ({category_name})"

@@ -24,6 +24,23 @@
      // Set up viewport
      setupViewport();
      
+     // Clear any existing groups
+     draw.clear();
+     
+     // Create all required groups in the correct order
+     const paperGroup = draw.group().id('paper-group');
+     const gridGroup = draw.group().id('grid-group');
+     const stageGroup = draw.group().id('stage-group');
+     const fohGroup = draw.group().id('foh-group');
+     const fixturesGroup = draw.group().id('fixtures-group');
+     
+     // Store all groups in state
+     setState('paperGroup', paperGroup);
+     setState('gridGroup', gridGroup);
+     setState('stageGroup', stageGroup);
+     setState('fohGroup', fohGroup);
+     setState('fixturesGroup', fixturesGroup);
+     
      // Draw paper background
      drawPaper();
      
@@ -32,6 +49,22 @@
      
      // Draw stage
      drawStage();
+     
+     // Configure fixtures group
+     fixturesGroup.attr({
+         'fill-opacity': 1,
+         'stroke-opacity': 1,
+         'pointer-events': 'all'
+     });
+     
+     // Set the fixtures group's position to match the viewport
+     const viewBox = draw.viewbox();
+     fixturesGroup.move(viewBox.x + viewBox.width/2, viewBox.y + viewBox.height/2);
+     
+     console.log('Canvas: Fixtures group created and positioned at:', {
+         x: viewBox.x + viewBox.width/2,
+         y: viewBox.y + viewBox.height/2
+     });
      
      console.log('Canvas: SVG canvas initialized');
  }
@@ -119,10 +152,17 @@
 function drawGrid() {
     console.log('Canvas: Drawing grid');
     
-    const gridGroup = getState('gridGroup');
-    if (!gridGroup) {
-        console.error('Canvas: Grid group not initialized');
+    const draw = getState('draw');
+    if (!draw) {
+        console.error('Canvas: SVG drawing not initialized');
         return;
+    }
+    
+    // Create grid group if it doesn't exist
+    let gridGroup = getState('gridGroup');
+    if (!gridGroup) {
+        gridGroup = draw.group().id('grid-group');
+        setState('gridGroup', gridGroup);
     }
     
     // Calculate paper size in pixels
@@ -154,12 +194,24 @@ function drawGrid() {
 function drawStage() {
     console.log('Canvas: Drawing stage');
     
-    const stageGroup = getState('stageGroup');
-    const fohGroup = getState('fohGroup');
-    
-    if (!stageGroup || !fohGroup) {
-        console.error('Canvas: Stage or FOH group not initialized');
+    const draw = getState('draw');
+    if (!draw) {
+        console.error('Canvas: SVG drawing not initialized');
         return;
+    }
+    
+    // Create stage and FOH groups if they don't exist
+    let stageGroup = getState('stageGroup');
+    let fohGroup = getState('fohGroup');
+    
+    if (!stageGroup) {
+        stageGroup = draw.group().id('stage-group');
+        setState('stageGroup', stageGroup);
+    }
+    
+    if (!fohGroup) {
+        fohGroup = draw.group().id('foh-group');
+        setState('fohGroup', fohGroup);
     }
     
     // Get the paper dimensions for reference

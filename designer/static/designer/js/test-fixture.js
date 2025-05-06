@@ -47,8 +47,6 @@ function addTestFixture() {
     
     // Add to fixtures list
     fixturesList.appendChild(fixtureItem);
-    
-    console.log('Test PAR 64 fixture added to fixtures list');
 }
 
 function addDirectPlacementButton() {

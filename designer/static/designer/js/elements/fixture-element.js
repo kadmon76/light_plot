@@ -8,7 +8,7 @@
  */
 
 import { BaseElement } from './base-element.js';
-import { getState } from '../core/state.js';
+import { getState, setState } from '../core/state.js';
 import behaviorManager from '../behaviors/behavior-manager.js';
 
 /**
@@ -21,13 +21,10 @@ export class FixtureElement extends BaseElement {
 
     /**
      * Create a new FixtureElement
-     * @param {String} type - Fixture type identifier
-     * @param {Number} x - X coordinate
-     * @param {Number} y - Y coordinate
      * @param {Object} properties - Fixture properties
      */
-    constructor(type, x, y, properties = {}) {
-        console.log('FixtureElement constructor: Received properties:', properties);
+    constructor(properties = {}) {
+        console.log('FixtureElement: Creating new fixture with properties:', properties);
         
         // Ensure we have an ID
         if (!properties.id) {
@@ -41,15 +38,20 @@ export class FixtureElement extends BaseElement {
             type: FixtureElement.type,
             properties: {
                 ...properties,
-                fixtureType: type
+                fixtureType: properties.fixtureType || 'default'
             }
         });
+        
+        // Store fixture type after super()
+        this.fixtureType = properties.fixtureType || 'default';
         
         // Store fixture-specific properties
         this._svgContent = null;
         
-        // Set initial position
-        this.move(x, y);
+        // Set initial position if provided
+        if (properties.position) {
+            this.move(properties.position.x, properties.position.y);
+        }
         
         // Initialize the element
         this._initialize();
@@ -68,33 +70,84 @@ export class FixtureElement extends BaseElement {
      * @protected
      */
     _initialize() {
-        if (this._initialized) return;
-
-        // Create SVG group
+        if (this._initialized) {
+            console.log('FixtureElement: Already initialized');
+            return;
+        }
+        
+        console.log('FixtureElement: Starting initialization');
+        
+        // Get the SVG drawing and fixtures group
         const draw = getState('draw');
-        if (!draw) {
-            console.error('FixtureElement: No SVG drawing found');
-            return;
-        }
-
-        // Get fixtures group
         const fixturesGroup = getState('fixturesGroup');
-        if (!fixturesGroup) {
-            console.error('FixtureElement: No fixtures group found');
+        
+        if (!draw || !fixturesGroup) {
+            console.error('FixtureElement: No SVG drawing or fixtures group found');
             return;
         }
-
-        // Create group for this fixture
-        this._svgElement = fixturesGroup.group();
-        // Store only the element ID to avoid circular references
-        this._svgElement.data('elementId', this.id());
-
-        // Load and apply SVG content
-        this._loadSvgContent();
-
-        // Apply behaviors
-        this._applyBehaviors();
-
+        console.log('FixtureElement: SVG drawing and fixtures group found');
+        
+        // Create a group for this fixture inside the fixtures group
+        this._svgElement = fixturesGroup.group().id(this.id());
+        console.log('FixtureElement: Created SVG group:', this._svgElement);
+        
+        // Create a simple fixture shape
+        const rect = this._svgElement.rect(40, 40)
+            .fill(this._properties.color || '#0066cc')
+            .stroke({ width: 2, color: '#000000' })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created base rectangle:', rect);
+            
+        // Add channel indicator
+        const circle = this._svgElement.circle(16)
+            .fill('white')
+            .stroke({ width: 1, color: '#000000' })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created channel indicator:', circle);
+            
+        // Add channel number
+        const text = this._svgElement.text(this._properties.channel || '1')
+            .font({ size: 12, family: 'Arial', weight: 'bold', anchor: 'middle' })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created channel text:', text);
+        
+        // Get the viewport center
+        const viewBox = draw.viewbox();
+        const centerX = viewBox.x + viewBox.width/2;
+        const centerY = viewBox.y + viewBox.height/2;
+        
+        // Get the fixtures group position
+        const fixturesBbox = fixturesGroup.bbox();
+        console.log('FixtureElement: Fixtures group bbox:', fixturesBbox);
+        
+        // Calculate position relative to fixtures group
+        const relativeX = centerX - fixturesBbox.x;
+        const relativeY = centerY - fixturesBbox.y;
+        
+        // Move the fixture relative to the fixtures group
+        this._svgElement.move(relativeX, relativeY);
+        
+        // Ensure the fixture is visible
+        this._svgElement.attr({
+            'fill-opacity': 1,
+            'stroke-opacity': 1,
+            'pointer-events': 'all'
+        });
+        
+        // Bring to front
+        this._svgElement.front();
+        
+        console.log('FixtureElement: Initialized and positioned at:', { 
+            centerX, 
+            centerY,
+            relativeX,
+            relativeY,
+            fixturesBbox
+        });
+        
         // Mark as initialized
         this._initialized = true;
     }
@@ -103,83 +156,148 @@ export class FixtureElement extends BaseElement {
      * Load SVG content for the fixture
      * @private
      */
-    _loadSvgContent() {
-        // Get fixture type data
-        const fixtureType = this.prop('fixtureType');
-        if (!fixtureType) {
-            console.error('FixtureElement: No fixture type specified');
-            return;
+    async _loadSvgContent() {
+        try {
+            console.log('FixtureElement: Loading SVG content for fixture type:', this.fixtureType);
+            
+            // Get the fixture element from the DOM - try both string and numeric IDs
+            const fixtureElement = document.querySelector(`.fixture-item[data-fixture-id="${this.fixtureType}"]`) || 
+                                 document.querySelector(`.fixture-item[data-fixture-id='${this.fixtureType}']`);
+            
+            if (!fixtureElement) {
+                console.error('FixtureElement: Fixture element not found for type:', this.fixtureType);
+                // Create a default fixture shape as fallback
+                this._createDefaultFixture();
+                return;
+            }
+            
+            // Get the SVG content from the fixture element
+            const svgContent = fixtureElement.getAttribute('data-svg-icon');
+            if (!svgContent) {
+                console.error('FixtureElement: SVG content not found in fixture element');
+                // Create a default fixture shape as fallback
+                this._createDefaultFixture();
+                return;
+            }
+            
+            console.log('FixtureElement: Found SVG content:', svgContent);
+            
+            // Create a temporary container to parse the SVG
+            const tempContainer = document.createElement('div');
+            tempContainer.innerHTML = svgContent;
+            const svgElement = tempContainer.querySelector('svg');
+            
+            if (!svgElement) {
+                console.error('FixtureElement: Invalid SVG content');
+                // Create a default fixture shape as fallback
+                this._createDefaultFixture();
+                return;
+            }
+            
+            // Clear existing content
+            this._svgElement.clear();
+            
+            // Create a new group for the SVG content
+            const contentGroup = this._svgElement.group();
+            
+            // Add the SVG content to the group
+            contentGroup.add(svgElement);
+            
+            // Get the bounding box of the content
+            const bbox = contentGroup.bbox();
+            console.log('FixtureElement: Initial content bounding box:', bbox);
+            
+            // Calculate the center point of the content
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+            
+            // Move the content so its center is at (0,0)
+            contentGroup.move(-centerX, -centerY);
+            
+            // Scale the content to fit a standard size (40x40)
+            const scale = Math.min(40 / bbox.width, 40 / bbox.height);
+            contentGroup.scale(scale);
+            
+            // Store the SVG content for later use
+            this._svgContent = contentGroup;
+            
+            // Ensure the content is visible
+            contentGroup.attr({
+                'fill-opacity': 1,
+                'stroke-opacity': 1,
+                'pointer-events': 'all'
+            });
+            
+            // Log the final bounding box
+            const finalBbox = contentGroup.bbox();
+            console.log('FixtureElement: Normalized content bounding box:', finalBbox);
+            
+        } catch (error) {
+            console.error('FixtureElement: Error loading SVG content:', error);
+            // Create a default fixture shape as fallback
+            this._createDefaultFixture();
         }
+    }
 
-        console.log('FixtureElement: Looking for fixture type:', fixtureType);
-
-        // Get fixture SVG from the library
-        const fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureType}"]`);
-        if (!fixtureItem) {
-            console.error('FixtureElement: Fixture type not found in library:', fixtureType);
-            console.log('Available fixture items:', document.querySelectorAll('.fixture-item'));
-            return;
-        }
-
-        // Get SVG content
-        const svgContent = fixtureItem.querySelector('.fixture-preview svg');
-        if (!svgContent) {
-            console.error('FixtureElement: No SVG content found for fixture type:', fixtureType);
-            console.log('Fixture item content:', fixtureItem.innerHTML);
-            return;
-        }
-
-        console.log('FixtureElement: Found SVG content for fixture type:', fixtureType);
-
-        // Clone and import SVG content
-        const importedSvg = document.importNode(svgContent, true);
-
-        // --- Normalization Logic ---
-        // Target box: 40x40 centered at (0,0)
-        const TARGET_SIZE = 40;
-        const TARGET_MIN = -20;
-        const TARGET_MAX = 20;
-
-        // Get original viewBox
-        let vb = importedSvg.getAttribute('viewBox');
-        let vbX = 0, vbY = 0, vbW = 40, vbH = 40;
-        if (vb) {
-            [vbX, vbY, vbW, vbH] = vb.split(/\s+/).map(Number);
-        } else {
-            // If no viewBox, try width/height
-            vbW = Number(importedSvg.getAttribute('width')) || 40;
-            vbH = Number(importedSvg.getAttribute('height')) || 40;
-        }
-
-        // Calculate scale to fit target box
-        const scale = TARGET_SIZE / Math.max(vbW, vbH);
-        // Calculate translation to center content
-        const transX = -((vbX + vbW / 2) * scale) + (TARGET_MIN + TARGET_SIZE / 2);
-        const transY = -((vbY + vbH / 2) * scale) + (TARGET_MIN + TARGET_SIZE / 2);
-
-        // Remove width/height, set standardized viewBox
-        importedSvg.removeAttribute('width');
-        importedSvg.removeAttribute('height');
-        importedSvg.setAttribute('width', TARGET_SIZE);
-        importedSvg.setAttribute('height', TARGET_SIZE);
-        importedSvg.setAttribute('viewBox', `${TARGET_MIN} ${TARGET_MIN} ${TARGET_SIZE} ${TARGET_SIZE}`);
-
-        // Apply transform to all children
-        for (let child of importedSvg.children) {
-            let prev = child.getAttribute('transform') || '';
-            child.setAttribute('transform', `scale(${scale}) translate(${transX / scale}, ${transY / scale}) ${prev}`.trim());
-        }
-
-        // Clear previous content and add the imported SVG
+    /**
+     * Create a default fixture shape when SVG content is not available
+     * @private
+     */
+    _createDefaultFixture() {
+        console.log('FixtureElement: Creating default fixture shape');
+        
+        // Create a simple fixture shape
         this._svgElement.clear();
-        this._svgElement.add(importedSvg);
-        this._svgContent = importedSvg;
+        
+        // Create base rectangle with explicit styling
+        const rect = this._svgElement.rect(40, 40)
+            .fill(this._properties.color || '#0066cc')
+            .stroke({ width: 2, color: '#000000' })
+            .attr({
+                'fill-opacity': 1,
+                'stroke-opacity': 1,
+                'pointer-events': 'all'
+            })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created base rectangle:', rect);
+            
+        // Add channel indicator with explicit styling
+        const circle = this._svgElement.circle(16)
+            .fill('white')
+            .stroke({ width: 1, color: '#000000' })
+            .attr({
+                'fill-opacity': 1,
+                'stroke-opacity': 1
+            })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created channel indicator:', circle);
+            
+        // Add channel number with explicit styling
+        const text = this._svgElement.text(this._properties.channel || '1')
+            .font({ size: 12, family: 'Arial', weight: 'bold', anchor: 'middle' })
+            .attr({
+                'fill': '#000000',
+                'fill-opacity': 1
+            })
+            .center(0, 0);
+            
+        console.log('FixtureElement: Created channel text:', text);
+            
+        // Store the SVG content
+        this._svgContent = this._svgElement;
 
-        // Center the SVG group at (0,0)
-        this._svgElement.center(0, 0);
-
-        // Apply properties
-        this._applyProperties();
+        // Position the fixture at its intended location
+        const position = this._properties.position || { x: 0, y: 0 };
+        this._svgElement.move(position.x, position.y);
+        
+        // Ensure the fixture is visible
+        this._svgElement.front();
+        
+        // Log the final bounding box
+        const bbox = this._svgElement.bbox();
+        console.log('FixtureElement: Default fixture bounding box:', bbox);
     }
 
     /**
@@ -211,6 +329,42 @@ export class FixtureElement extends BaseElement {
             'rotatable'
         ]);
     }
+
+    /**
+     * Move the fixture to a new position
+     * @param {Number} x - X coordinate
+     * @param {Number} y - Y coordinate
+     */
+    move(x, y) {
+        if (!this._svgElement) {
+            console.error('FixtureElement: Cannot move - no SVG element');
+            return;
+        }
+        
+        console.log('FixtureElement: Moving to position:', { x, y });
+        
+        // Store the position in properties
+        this._properties.position = { x, y };
+        
+        // Move the SVG element
+        this._svgElement.move(x, y);
+        
+        // Ensure the fixture is visible
+        this._svgElement.attr({
+            'fill-opacity': 1,
+            'stroke-opacity': 1,
+            'pointer-events': 'all'
+        });
+        
+        // Bring to front
+        this._svgElement.front();
+        
+        // Log the new position
+        const bbox = this._svgElement.bbox();
+        console.log('FixtureElement: New position after move:', bbox);
+        
+        return this;
+    }
 }
 
 /**
@@ -222,22 +376,23 @@ export class FixtureElement extends BaseElement {
  * @return {FixtureElement} The created fixture
  */
 export function createFixture(type, x, y, properties = {}) {
-    console.log('createFixture: Input properties:', properties);
+    console.log('createFixture: Creating new fixture with type:', type, 'at position:', { x, y }, 'with properties:', properties);
     
-    // Generate a unique ID
-    const fixtureId = `fixture-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    console.log('createFixture: Generated ID:', fixtureId);
-    
-    // Create final properties object
-    const finalProperties = {
+    // Create the properties object
+    const fixtureProperties = {
         ...properties,
-        id: fixtureId,
-        fixtureType: type
+        id: properties.id || `fixture-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        fixtureType: type,
+        position: { x, y }
     };
-    console.log('createFixture: Final properties:', finalProperties);
     
-    // Create and return the fixture
-    return new FixtureElement(type, x, y, finalProperties);
+    console.log('createFixture: Final properties:', fixtureProperties);
+    
+    // Create the fixture instance
+    const fixture = new FixtureElement(fixtureProperties);
+    console.log('createFixture: Fixture instance created:', fixture);
+    
+    return fixture;
 }
 
 /**
@@ -271,3 +426,4 @@ export function loadFixture(fixtureData) {
     
     return fixture;
 }
+
