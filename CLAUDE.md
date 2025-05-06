@@ -55,6 +55,14 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 
 ## Recent Updates
 
+### Fixed Fixture Visibility Issue (May 2025)
+- Fixed critical issue where fixtures weren't appearing on the canvas despite being created
+- Replaced SVG.js method calls with direct DOM manipulation for reliable element addition
+- Added proper SVG namespace handling for element creation
+- Implemented coordinate system transformation for fixture positioning
+- Applied appropriate scaling and visibility attributes
+- Fixtures from the library now appear properly on the canvas
+
 ### Improved Modal System
 - Utilized the existing modal utility (modal-utils.js) based on Bootstrap
 - Fixed ID consistency issues to ensure modals are properly referenced
@@ -88,23 +96,31 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 
 ## Next Steps
 
-1. Code Review and Refactoring
-   - Identify and fix potential issues with modal lifecycle management
-   - Address potential memory leaks from recreating modals
-   - Make pattern options more data-driven instead of large HTML strings
-   - Standardize module exports
-   - Optimize event listener handling
+1. Code Cleanup and Refactoring
+   - Remove temporary debugging statements and test elements
+   - Consolidate fixture creation approaches (SVG.js vs. direct DOM manipulation)
+   - Extract common fixture creation logic into reusable functions
+   - Simplify event handlers and ensure proper cleanup
+   - Improve error handling for SVG parsing and DOM operations
+   - Standardize coordinate transformations
+   - Document edge cases and workarounds
 
-2. Implement fixture creation functionality
-   - Create fixtures based on the selected pattern
-   - Calculate placement positions for line, grid, and circle patterns
-   - Handle manual placement mode
-   - Apply selected properties (color, starting ID, purpose)
+2. Fixture Enhancements
+   - Improve fixture selection and property editing
+   - Add behavior for locking fixtures in place
+   - Implement fixture duplication and copy/paste
+   - Add fixture focusing and beam visualization
 
-3. Backend Integration
-   - Add API endpoint for checking if a fixture ID is already in use
-   - Implement server-side validation
-   - Save created fixtures to the database
+3. Modular Behavior Refactoring
+   - Implement DRY principle with shared behaviors
+   - Create a more consistent behavior-based architecture
+   - Improve behavior composition and event handling
+
+4. User Interface Improvements
+   - Add more visual feedback for element interaction
+   - Implement undo/redo functionality
+   - Add snap-to-grid and alignment tools
+   - Improve fixture property panel
 
 ## Code Organization
 designer/static/designer/js/

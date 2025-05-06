@@ -124,9 +124,14 @@ export class FixtureElement extends BaseElement {
         console.log('FixtureElement: Fixtures group bbox:', fixturesBbox);
         
         // Calculate position relative to fixtures group
-        const relativeX = centerX - fixturesBbox.x;
-        const relativeY = centerY - fixturesBbox.y;
+        const relativeX = 0;  // Position at the center of the viewport
+        const relativeY = 0;
+        console.log('FixtureElement: SETTING POSITION TO CENTER OF VIEWPORT');
         
+        this._svgElement.rect(60, 60)  // Larger rectangle
+            .fill('#FF0000')  // Bright red color
+            .stroke({ width: 3, color: '#000000' })
+            .center(0, 0);
         // Move the fixture relative to the fixtures group
         this._svgElement.move(relativeX, relativeY);
         
@@ -335,6 +340,7 @@ export class FixtureElement extends BaseElement {
      * @param {Number} x - X coordinate
      * @param {Number} y - Y coordinate
      */
+    // Replace the move method with this updated version
     move(x, y) {
         if (!this._svgElement) {
             console.error('FixtureElement: Cannot move - no SVG element');
@@ -346,8 +352,31 @@ export class FixtureElement extends BaseElement {
         // Store the position in properties
         this._properties.position = { x, y };
         
-        // Move the SVG element
-        this._svgElement.move(x, y);
+        // Get the center of the viewport
+        const draw = getState('draw');
+        if (draw) {
+            const viewBox = draw.viewbox();
+            const centerX = viewBox.x + viewBox.width / 2;
+            const centerY = viewBox.y + viewBox.height / 2;
+            
+            console.log('FixtureElement: Viewport center:', { centerX, centerY });
+            
+            // Use absolute positioning instead of relative
+            this._svgElement.center(centerX, centerY);
+            
+            // Log that we're using absolute positioning
+            console.log('FixtureElement: Using ABSOLUTE positioning at viewport center');
+        } else {
+            // Fallback to regular move if draw isn't available
+            this._svgElement.move(x, y);
+        }
+        
+        // Make fixture highly visible for debugging
+        const rect = this._svgElement.findOne('rect');
+        if (rect) {
+            rect.fill('#FF00FF').stroke({ width: 5, color: '#000000' });
+            rect.width(100).height(100);
+        }
         
         // Ensure the fixture is visible
         this._svgElement.attr({
@@ -356,8 +385,14 @@ export class FixtureElement extends BaseElement {
             'pointer-events': 'all'
         });
         
-        // Bring to front
-        this._svgElement.front();
+        // Bring to front - use front() method if available, otherwise use regular DOM methods
+        try {
+            this._svgElement.front();
+        } catch (e) {
+            if (this._svgElement.node && this._svgElement.node.parentNode) {
+                this._svgElement.node.parentNode.appendChild(this._svgElement.node);
+            }
+        }
         
         // Log the new position
         const bbox = this._svgElement.bbox();
