@@ -8,24 +8,21 @@
  */
 
 import { createModal, showModal } from '../utils/modal-utils.js';
-import { getState, setCurrentTool, setState } from '../core/state.js';
+import { getState, setCurrentTool } from '../core/state.js';
 import { TOOLS } from '../core/config.js';
 import { createFixture } from '../elements/fixture-element.js';
 import behaviorManager from '../behaviors/behavior-manager.js';
 
 // Create the modal when the module is imported
 let fixturesModal;
+const FIXTURES_MODAL_ID = 'add-fixtures-modal';
 
 /**
  * Initialize the Add Fixtures modal
  */
 export function initFixturesModal() {
-    console.log('FixturesModal: Initializing Add Fixtures modal');
-    
     // Set up event listener for the Add Fixture button
     setupButtonListener();
-    
-    console.log('FixturesModal: Add Fixtures modal initialized');
 }
 
 /**
@@ -38,13 +35,8 @@ function setupButtonListener() {
         return;
     }
     
-    // Store the original click handler if it exists
-    const originalClickHandler = addFixtureBtn.onclick;
-    
     // Override the click handler
     addFixtureBtn.onclick = function(event) {
-        console.log('FixturesModal: Add Fixture button clicked');
-        
         // Open the modal
         openAddFixturesModal();
         
@@ -52,18 +44,15 @@ function setupButtonListener() {
         event.preventDefault();
     };
 }
-const FIXTURES_MODAL_ID = 'add-fixtures-modal';
 
 /**
  * Open the Add Fixtures modal
  */
- function openAddFixturesModal() {
-    console.log('FixturesModal: Opening Add Fixtures modal');
-    
+function openAddFixturesModal() {
     // Create the modal each time to ensure we have fresh data
     createAddFixturesModal();
     
-    // Show the modal - use the constant here
+    // Show the modal
     showModal(FIXTURES_MODAL_ID);
 }
 
@@ -71,14 +60,12 @@ const FIXTURES_MODAL_ID = 'add-fixtures-modal';
  * Create the Add Fixtures modal
  */
 function createAddFixturesModal() {
-    console.log('FixturesModal: Creating Add Fixtures modal');
-    
     // Create the modal body content
     const modalBody = createModalBody();
     
-    // Create the modal - use the constant here
+    // Create the modal
     fixturesModal = createModal({
-        id: FIXTURES_MODAL_ID,  // Use the same ID constant
+        id: FIXTURES_MODAL_ID,
         title: 'Add Fixtures',
         body: modalBody,
         size: 'lg',
@@ -98,7 +85,6 @@ function createAddFixturesModal() {
         },
         onShow: handleModalShow,
         onHide: () => {
-            console.log('FixturesModal: Modal hidden');
             // Reset form when modal is hidden
             const form = document.getElementById('add-fixtures-form');
             if (form) {
@@ -107,12 +93,8 @@ function createAddFixturesModal() {
             }
         }
     });
-    
-    console.log('FixturesModal: Add Fixtures modal created');
 }
-/**
- * Create the Add Fixtures modal
- */
+
 
 /**
  * Create the modal body content
@@ -197,8 +179,6 @@ function createModalBody() {
     // Return the container
     return container;
 }
-
-
 
 /**
  * Update pattern-specific options based on the selected pattern
@@ -332,17 +312,10 @@ function updatePatternOptions() {
     setupBootstrapValidation();
 }
 
-// Export the module functions
-export default {
-    initFixturesModal
-};
-
 /**
  * Set up Bootstrap validation
  */
- function setupBootstrapValidation() {
-    console.log('FixturesModal: Setting up Bootstrap validation');
-    
+function setupBootstrapValidation() {
     // Get all forms with the "needs-validation" class
     const forms = document.querySelectorAll('.needs-validation');
     
@@ -358,7 +331,7 @@ export default {
  * Handle form submission
  * @param {Event} event - Submit event
  */
- function handleFormSubmission(event) {
+function handleFormSubmission(event) {
     const form = event.currentTarget;
     
     // Reset any custom validation messages first
@@ -415,8 +388,6 @@ function hasDuplicateFixtureId(fixtureId) {
  * Creates and adds fixtures based on form values
  */
 function handleAddFixtures() {
-    console.log('FixturesModal: Starting fixture creation process');
-    
     // Get form values
     const fixtureTypeSelect = document.getElementById('fixture-type-select');
     const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
@@ -430,8 +401,6 @@ function handleAddFixtures() {
         fixtureId: parseInt(document.getElementById('starting-channel').value) || 1
     };
     
-    console.log('FixturesModal: Form values:', formValues);
-    
     // Get the SVG drawing and its viewport
     const svgDrawing = document.querySelector('#canvas svg');
     if (!svgDrawing) {
@@ -439,26 +408,13 @@ function handleAddFixtures() {
         return;
     }
     
-    console.log('FixturesModal: SVG drawing found:', svgDrawing);
-    
     // Calculate center position of the viewport
     const viewBox = svgDrawing.viewBox.baseVal;
     const centerX = viewBox.x + (viewBox.width / 2);
     const centerY = viewBox.y + (viewBox.height / 2);
     
-    console.log('FixturesModal: Viewport dimensions:', {
-        x: viewBox.x,
-        y: viewBox.y,
-        width: viewBox.width,
-        height: viewBox.height,
-        centerX,
-        centerY
-    });
-    
     // Get the fixtures group
     const fixturesGroup = getState('fixturesGroup');
-    console.log('FixturesModal: Fixtures group:', fixturesGroup);
-    
     if (!fixturesGroup) {
         console.error('FixturesModal: No fixtures group found');
         return;
@@ -474,16 +430,8 @@ function handleAddFixtures() {
         position: { x: centerX, y: centerY }
     };
     
-    console.log('FixturesModal: Creating fixture with properties:', properties);
-    
     // Create the fixture at the center of the viewport
     const fixture = createFixture(formValues.fixtureType, centerX, centerY, properties);
-        
-    console.log('FixturesModal: Fixture created:', fixture);
-    
-    // Add to fixtures group
-    console.log('FixturesModal: Adding fixture to group');
-    console.log('FixturesModal: Creating fixture directly from library data');
     
     try {
         // Get SVG document and fixtures group
@@ -491,12 +439,8 @@ function handleAddFixtures() {
         const fixturesGroupElement = document.getElementById('fixtures-group');
         
         if (svgDoc && fixturesGroupElement) {
-            // Get fixture data from the selected fixture in the library
-            const fixtureTypeSelect = document.getElementById('fixture-type-select');
-            const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
-            const fixtureId = selectedOption.value;
-            
             // Find the fixture item in the DOM to get its SVG icon
+            const fixtureId = selectedOption.value;
             const fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`);
             let svgIcon = '';
             
@@ -504,7 +448,6 @@ function handleAddFixtures() {
             if (fixtureItem && fixtureItem.getAttribute('data-svg-icon')) {
                 // Use SVG icon from the fixture library
                 svgIcon = fixtureItem.getAttribute('data-svg-icon');
-                console.log('FixturesModal: Using SVG icon from library:', svgIcon);
             }
             
             // Create a new group for the fixture with SVG namespace
@@ -554,31 +497,25 @@ function handleAddFixtures() {
                     channelText.setAttribute('font-size', '12');
                     channelText.setAttribute('font-family', 'Arial');
                     channelText.setAttribute('font-weight', 'bold');
-                    channelText.textContent = fixture._properties.channel;
+                    channelText.textContent = properties.channel;
                     fixtureGroup.appendChild(channelText);
-                    
-                    console.log('FixturesModal: Added SVG elements from library to fixture group', fixtureGroup);
                 } else {
                     // Fallback to default if SVG parsing failed
-                    createDefaultFixture(fixtureGroup, fixture._properties.channel, fixture._properties.color);
+                    createDefaultFixture(fixtureGroup, properties.channel, properties.color);
                 }
             } else {
                 // Create default fixture shape if no SVG icon available
-                createDefaultFixture(fixtureGroup, fixture._properties.channel, fixture._properties.color);
+                createDefaultFixture(fixtureGroup, properties.channel, properties.color);
             }
             
             // Add fixture group to fixtures group
             fixturesGroupElement.appendChild(fixtureGroup);
             
-            // Position at the center of viewport and scale
-            fixtureGroup.setAttribute('transform', 'translate(0, 0) scale(1.5)');
-            
-            console.log('FixturesModal: Library fixture created and added to DOM:', fixtureGroup);
-        } else {
-            console.error('FixturesModal: Could not find SVG or fixtures group element');
+            // Position at the center of viewport
+            fixtureGroup.setAttribute('transform', `translate(${centerX}, ${centerY}) scale(1.5)`);
         }
     } catch(error) {
-        console.error('FixturesModal: Error creating library fixture:', error);
+        console.error('Error creating library fixture:', error);
     }
     
     // Helper function to create a default fixture
@@ -617,61 +554,12 @@ function handleAddFixtures() {
         group.appendChild(rect);
         group.appendChild(circle);
         group.appendChild(text);
-        
-        console.log('FixturesModal: Created default fixture with channel', channelNumber);
     }
-    
-    // Ensure the fixture is visible
-    fixture._svgElement.attr({
-        'fill-opacity': 1,
-        'stroke-opacity': 1,
-        'pointer-events': 'all'
-    });
-    
-    // Move to center and ensure it's visible
-    console.log('FixturesModal: Moving fixture to center');
-    fixture.move(centerX, centerY);
-    
-    // Bring to front
-    fixture._svgElement.front();
-    
-    console.log('FixturesModal: Fixture creation complete');
     
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('add-fixtures-modal'));
     if (modal) {
         modal.hide();
-    }
-}
-
-/**
- * Get pattern-specific options based on the selected pattern
- * @param {String} pattern - Selected pattern
- * @return {Object} Pattern-specific options
- */
-function getPatternOptions(pattern) {
-    switch (pattern) {
-        case 'line':
-            return {
-                direction: document.getElementById('line-direction').value,
-                spacing: parseInt(document.getElementById('line-spacing').value)
-            };
-        case 'grid':
-            return {
-                rows: parseInt(document.getElementById('grid-rows').value),
-                columns: parseInt(document.getElementById('grid-columns').value),
-                hSpacing: parseInt(document.getElementById('grid-h-spacing').value),
-                vSpacing: parseInt(document.getElementById('grid-v-spacing').value)
-            };
-        case 'circle':
-            return {
-                radius: parseInt(document.getElementById('circle-radius').value),
-                startAngle: parseInt(document.getElementById('circle-start-angle').value)
-            };
-        case 'manual':
-            return {}; // No special options for manual placement
-        default:
-            return {};
     }
 }
 
@@ -756,77 +644,4 @@ function handleModalShow() {
         form.classList.remove('was-validated');
     }
 }
-
-/**
- * Handle add fixtures button click
- * @private
- */
-function _handleAddFixtures() {
-    console.log('FixturesModal: Starting fixture creation');
-    
-    // Get form values
-    const fixtureTypeSelect = document.getElementById('fixture-type-select');
-    const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
-    const fixtureType = selectedOption.dataset.fixtureType;
-    const quantity = parseInt(document.getElementById('fixture-quantity').value);
-    const pattern = document.getElementById('placement-pattern').value;
-    const color = document.getElementById('fixture-color').value;
-    const fixtureId = parseInt(document.getElementById('starting-channel').value);
-    const channelIncrement = parseInt(document.getElementById('channel-increment').value);
-    const purpose = document.getElementById('fixture-purpose').value;
-
-    // Check for duplicate fixture ID
-    if (hasDuplicateFixtureId(fixtureId)) {
-        console.error('FixturesModal: Duplicate fixture ID found:', fixtureId);
-        return;
-    }
-
-    // Get SVG drawing
-    const svgDrawing = document.querySelector('#svg-drawing');
-    if (!svgDrawing) {
-        console.error('FixturesModal: SVG drawing not found');
-        return;
-    }
-
-    // Calculate center position
-    const viewBox = svgDrawing.viewBox.baseVal;
-    const centerX = viewBox.x + viewBox.width / 2;
-    const centerY = viewBox.y + viewBox.height / 2;
-
-    // Create fixture at center
-    const fixture = createFixture(fixtureType, centerX, centerY, {
-        color,
-        fixtureId,
-        channelIncrement,
-        purpose
-    });
-
-    if (!fixture) {
-        console.error('FixturesModal: Failed to create fixture');
-        return;
-    }
-
-    // Apply droppable behavior
-    const droppableBehavior = behaviorManager.applyBehavior(fixture, 'droppable', {
-        snapToGrid: true,
-        gridSize: 10
-    });
-
-    if (!droppableBehavior) {
-        console.error('FixturesModal: Failed to apply droppable behavior');
-        return;
-    }
-
-    // Close modal
-    fixturesModal.hide();
-    const form = document.getElementById('add-fixtures-form');
-    if (form) {
-        form.reset();
-        form.classList.remove('was-validated');
-    }
-
-    console.log('FixturesModal: Fixture created and dropped successfully');
-}
-
-console.log('Fixtures group:', getState('fixturesGroup'));
 
