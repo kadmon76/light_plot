@@ -366,28 +366,14 @@ function handleFormSubmission(event) {
     }
 }
 
-/**
- * Check if a fixture ID already exists
- * @param {Number} fixtureId - Fixture ID to check
- * @return {Boolean} Whether the ID exists
- */
-function hasDuplicateFixtureId(fixtureId) {
-    // Get all existing fixtures
-    const fixturesGroup = getState('fixturesGroup');
-    if (!fixturesGroup) return false;
-
-    // Check if any fixture has this ID
-    return fixturesGroup.children().some(fixture => {
-        const element = fixture.data('element');
-        return element && element.getProperty('fixtureId') === fixtureId;
-    });
-}
 
 /**
  * Handle Add Fixtures button click
  * Creates and adds fixtures based on form values
  */
 function handleAddFixtures() {
+    console.log('handleAddFixtures started execution');
+    console.log('Call stack:', new Error().stack);
     // Get form values
     const fixtureTypeSelect = document.getElementById('fixture-type-select');
     const selectedOption = fixtureTypeSelect.options[fixtureTypeSelect.selectedIndex];
@@ -433,129 +419,6 @@ function handleAddFixtures() {
     // Create the fixture at the center of the viewport
     const fixture = createFixture(formValues.fixtureType, centerX, centerY, properties);
     
-    try {
-        // Get SVG document and fixtures group
-        const svgDoc = document.querySelector('#canvas svg');
-        const fixturesGroupElement = document.getElementById('fixtures-group');
-        
-        if (svgDoc && fixturesGroupElement) {
-            // Find the fixture item in the DOM to get its SVG icon
-            const fixtureId = selectedOption.value;
-            const fixtureItem = document.querySelector(`.fixture-item[data-fixture-id="${fixtureId}"]`);
-            let svgIcon = '';
-            
-            // Default fixture appearance if we can't find custom SVG
-            if (fixtureItem && fixtureItem.getAttribute('data-svg-icon')) {
-                // Use SVG icon from the fixture library
-                svgIcon = fixtureItem.getAttribute('data-svg-icon');
-            }
-            
-            // Create a new group for the fixture with SVG namespace
-            const fixtureGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            fixtureGroup.id = 'library-fixture-' + Date.now();
-            
-            // If we have a SVG icon, use it, otherwise create a default fixture
-            if (svgIcon && svgIcon.trim().length > 0) {
-                // Parse the SVG icon and add it to the fixture group
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = svgIcon;
-                const svgElement = tempDiv.querySelector('svg');
-                
-                if (svgElement) {
-                    // Extract all child elements from the SVG and add them to our fixture group
-                    const svgChildren = svgElement.childNodes;
-                    for (let i = 0; i < svgChildren.length; i++) {
-                        const node = svgChildren[i];
-                        // Only append actual element nodes, not comments or text nodes
-                        if (node.nodeType === 1) { // 1 = Element node
-                            fixtureGroup.appendChild(node.cloneNode(true));
-                        }
-                    }
-                    
-                    // Make the fixture highly visible
-                    const rects = fixtureGroup.querySelectorAll('rect');
-                    for (let i = 0; i < rects.length; i++) {
-                        rects[i].setAttribute('fill', '#FF00FF');
-                        rects[i].setAttribute('stroke-width', '3');
-                    }
-                    
-                    // Add channel indicator
-                    const channelCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    channelCircle.setAttribute('r', '10');
-                    channelCircle.setAttribute('cx', '50');
-                    channelCircle.setAttribute('cy', '60');
-                    channelCircle.setAttribute('fill', 'white');
-                    channelCircle.setAttribute('stroke', '#000000');
-                    channelCircle.setAttribute('stroke-width', '1');
-                    fixtureGroup.appendChild(channelCircle);
-                    
-                    // Add channel number
-                    const channelText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    channelText.setAttribute('x', '50');
-                    channelText.setAttribute('y', '65');
-                    channelText.setAttribute('text-anchor', 'middle');
-                    channelText.setAttribute('font-size', '12');
-                    channelText.setAttribute('font-family', 'Arial');
-                    channelText.setAttribute('font-weight', 'bold');
-                    channelText.textContent = properties.channel;
-                    fixtureGroup.appendChild(channelText);
-                } else {
-                    // Fallback to default if SVG parsing failed
-                    createDefaultFixture(fixtureGroup, properties.channel, properties.color);
-                }
-            } else {
-                // Create default fixture shape if no SVG icon available
-                createDefaultFixture(fixtureGroup, properties.channel, properties.color);
-            }
-            
-            // Add fixture group to fixtures group
-            fixturesGroupElement.appendChild(fixtureGroup);
-            
-            // Position at the center of viewport
-            fixtureGroup.setAttribute('transform', `translate(${centerX}, ${centerY}) scale(1.5)`);
-        }
-    } catch(error) {
-        console.error('Error creating library fixture:', error);
-    }
-    
-    // Helper function to create a default fixture
-    function createDefaultFixture(group, channelNumber, color) {
-        // Create a rectangle for the fixture body
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('width', '80');
-        rect.setAttribute('height', '80');
-        rect.setAttribute('x', '-40');
-        rect.setAttribute('y', '-40');
-        rect.setAttribute('fill', color || '#FF0000');
-        rect.setAttribute('stroke', '#000000');
-        rect.setAttribute('stroke-width', '3');
-        
-        // Create a circle for the channel
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('r', '15');
-        circle.setAttribute('cx', '0');
-        circle.setAttribute('cy', '0');
-        circle.setAttribute('fill', 'white');
-        circle.setAttribute('stroke', '#000000');
-        circle.setAttribute('stroke-width', '2');
-        
-        // Create text for the channel number
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', '0');
-        text.setAttribute('y', '5');
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-size', '16');
-        text.setAttribute('font-family', 'Arial');
-        text.setAttribute('font-weight', 'bold');
-        text.setAttribute('fill', '#000000');
-        text.textContent = channelNumber || '1';
-        
-        // Add everything to the fixture group
-        group.appendChild(rect);
-        group.appendChild(circle);
-        group.appendChild(text);
-    }
-    
     // Close modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('add-fixtures-modal'));
     if (modal) {
@@ -567,8 +430,7 @@ function handleAddFixtures() {
  * Handle modal show event - populate fixture types and set up validation
  */
 function handleModalShow() {
-    console.log('FixturesModal: Modal shown, populating fixture types');
-    
+  
     // Get the fixture type select element
     const fixtureTypeSelect = document.getElementById('fixture-type-select');
     if (!fixtureTypeSelect) {

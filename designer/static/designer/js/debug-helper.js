@@ -91,3 +91,119 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(debugMessage);
     }, 1000); // Wait 1 second to ensure everything is loaded
 });
+
+// Add this to your debug-helper.js file to inspect fixture data attributes
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        // Add a button to inspect fixture data
+        const inspectButton = document.createElement('button');
+        inspectButton.textContent = 'Inspect Fixture Data';
+        inspectButton.style.position = 'absolute';
+        inspectButton.style.top = '35px';
+        inspectButton.style.right = '260px';
+        inspectButton.style.zIndex = '1000';
+        inspectButton.style.padding = '5px 10px';
+        inspectButton.style.backgroundColor = '#ffaa00';
+        inspectButton.style.color = '#000';
+        inspectButton.style.border = '2px solid #cc7700';
+        inspectButton.style.borderRadius = '4px';
+        
+        inspectButton.addEventListener('click', function() {
+            // Get all fixture items in the sidebar
+            const fixtureItems = document.querySelectorAll('.fixture-item');
+            console.log('Found', fixtureItems.length, 'fixture items');
+            
+            fixtureItems.forEach((item, index) => {
+                console.log(`Fixture ${index}:`, {
+                    id: item.dataset.fixtureId,
+                    type: item.dataset.fixtureType,
+                    svgIcon: item.dataset.svgIcon ? 'Present' : 'Missing',
+                    svgIconContent: item.dataset.svgIcon ? item.dataset.svgIcon.substring(0, 50) + '...' : 'None'
+                });
+            });
+        });
+        
+        document.body.appendChild(inspectButton);
+    }, 1000);
+});
+
+// Add this to debug-helper.js
+
+// Add DOM observer to track elements being added to fixtures group
+function setupFixtureCreationObserver() {
+    // Wait for fixtures group to exist
+    const checkInterval = setInterval(() => {
+        const fixturesGroup = document.getElementById('fixtures-group');
+        if (fixturesGroup) {
+            clearInterval(checkInterval);
+            
+            console.log('Debug: Setting up observer for fixtures group');
+            
+            // Create observer
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach(mutation => {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === 1) { // Element node
+                                console.log('Debug: Element added to fixtures group:', {
+                                    id: node.id,
+                                    tagName: node.tagName,
+                                    timestamp: new Date().toISOString(),
+                                    stack: new Error().stack // This will show call stack
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Start observing
+            observer.observe(fixturesGroup, { 
+                childList: true, 
+                subtree: false 
+            });
+            
+            console.log('Debug: Observer set up successfully');
+        }
+    }, 500);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(setupFixtureCreationObserver, 1500);
+});
+// Add to debug-helper.js
+
+function inspectFixtureSvgData() {
+    const fixtureItems = document.querySelectorAll('.fixture-item');
+    console.log('Found', fixtureItems.length, 'fixture items');
+    
+    fixtureItems.forEach((item, index) => {
+        const fixtureId = item.dataset.fixtureId;
+        const svgIcon = item.dataset.svgIcon;
+        console.log(`Fixture ${index} (ID: ${fixtureId}):`, {
+            hasSvgIcon: !!svgIcon,
+            svgIconPreview: svgIcon ? svgIcon.substring(0, 100) + '...' : 'None'
+        });
+    });
+}
+
+// Add a button for this
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const inspectSvgButton = document.createElement('button');
+        inspectSvgButton.textContent = 'Inspect SVG Data';
+        inspectSvgButton.style.position = 'absolute';
+        inspectSvgButton.style.top = '65px';
+        inspectSvgButton.style.right = '260px';
+        inspectSvgButton.style.zIndex = '1000';
+        inspectSvgButton.style.padding = '5px 10px';
+        inspectSvgButton.style.backgroundColor = '#00cc99';
+        inspectSvgButton.style.color = '#000';
+        inspectSvgButton.style.border = '2px solid #009977';
+        inspectSvgButton.style.borderRadius = '4px';
+        
+        inspectSvgButton.addEventListener('click', inspectFixtureSvgData);
+        document.body.appendChild(inspectSvgButton);
+    }, 1000);
+});

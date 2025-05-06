@@ -55,6 +55,19 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 
 ## Recent Updates
 
+### Fixed Duplicated Fixture Elements (May 2025)
+- Identified and fixed issue where fixtures were being created twice in the DOM
+- Fixed conflict between BaseElement constructor and FixtureElement._initialize() both creating SVG elements
+- Implemented clean solution using dummy element and proper initialization flow
+- Eliminated duplicate DOM elements and ensuring proper event handling
+
+### Fixed SVG Loading for Fixtures (May 2025)
+- Implemented robust SVG loading and rendering for custom fixture types
+- Created _loadSvgContent method to properly retrieve and parse SVG data
+- Added multiple approaches to handle SVG content (direct import and element-by-element recreation)
+- Improved error handling with proper fallbacks to default shapes when SVG loading fails
+- Added detailed logging for tracking SVG loading and debugging
+
 ### Fixed Fixture Visibility Issue (May 2025)
 - Fixed critical issue where fixtures weren't appearing on the canvas despite being created
 - Replaced SVG.js method calls with direct DOM manipulation for reliable element addition
@@ -84,39 +97,33 @@ We have implemented a clean, modular architecture for the Light Plot Designer th
 - Dynamic form updates based on the selected pattern
 - Integration with fixture types from the existing sidebar
 
-## SVG Normalization for Fixtures (2024-06)
-
-- All fixture SVGs (from backend/admin or future user uploads) are now automatically normalized and centered in the frontend.
-- The normalization logic is implemented in the `FixtureElement` class:
-  - Any SVG, regardless of its original `viewBox` or size, is scaled and centered to fit a standard 40x40 box at (0,0).
-  - This ensures consistent sizing and placement for all fixtures on the canvas.
-- This approach is DRY: the normalization logic lives in one place and applies to all fixture creation flows.
-- The backend continues to provide the SVG markup, but the frontend is responsible for rendering consistency.
-- This prepares the app for future user-uploaded fixtures, ensuring robust and predictable rendering.
-
 ## Next Steps
 
-1. Code Cleanup and Refactoring
+1. **Fixture Selection and Editing**
+   - Implement robust fixture selection directly on the canvas
+   - Enhance property panel to show selected fixture properties
+   - Allow editing fixture properties through the panel
+   - Support multi-selection and bulk editing of properties
+
+2. **Code Cleanup and Refactoring**
    - Remove temporary debugging statements and test elements
-   - Consolidate fixture creation approaches (SVG.js vs. direct DOM manipulation)
-   - Extract common fixture creation logic into reusable functions
-   - Simplify event handlers and ensure proper cleanup
+   - Extract common SVG utility functions to reusable helpers
    - Improve error handling for SVG parsing and DOM operations
    - Standardize coordinate transformations
    - Document edge cases and workarounds
 
-2. Fixture Enhancements
+3. **Fixture Enhancements**
    - Improve fixture selection and property editing
    - Add behavior for locking fixtures in place
    - Implement fixture duplication and copy/paste
    - Add fixture focusing and beam visualization
 
-3. Modular Behavior Refactoring
+4. **Modular Behavior Refactoring**
    - Implement DRY principle with shared behaviors
    - Create a more consistent behavior-based architecture
    - Improve behavior composition and event handling
 
-4. User Interface Improvements
+5. **User Interface Improvements**
    - Add more visual feedback for element interaction
    - Implement undo/redo functionality
    - Add snap-to-grid and alignment tools
